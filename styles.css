@@ -60,3 +60,18 @@ html{min-height:100%;background:#8fdbe6}
 body{background:transparent!important;position:relative;isolation:isolate}
 .weather-scene{z-index:-1!important}
 .app-shell{position:relative;z-index:1}
+
+
+/* v0.1.005 — le fond entier EST la météo; cartes légèrement translucides */
+.weather-scene{z-index:0!important}
+.app-shell{z-index:1}
+.card{background:rgba(250,253,252,.86);border-color:rgba(255,255,255,.72);box-shadow:0 4px 18px #073c4a18}
+.quickbar{background:rgba(248,255,255,.84);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.demo-panel{background:rgba(255,255,255,.70);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+/* Rendre la scène météo nettement perceptible dans tous les espaces libres */
+.weather-scene:before{content:"";position:absolute;inset:0;opacity:.38;pointer-events:none;background:radial-gradient(ellipse at 18% 34%,#fff 0 6%,transparent 7%),radial-gradient(ellipse at 80% 28%,#fff 0 5%,transparent 6%)}
+body[data-weather="sun"] .weather-scene:before{opacity:.10}
+body[data-weather="cloud"] .weather-scene:before{opacity:.45}
+body[data-weather="rain"] .weather-scene:before,body[data-weather="storm"] .weather-scene:before{opacity:.25}
+body[data-weather="fog"] .weather-scene:before{opacity:.60}
+body[data-period="night"] .weather-scene:before{opacity:.08}
