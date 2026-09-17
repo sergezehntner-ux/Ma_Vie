@@ -1,1 +1,1 @@
-{"name":"Ma Vie — le guide de mes journées","short_name":"Ma Vie","start_url":"./","display":"standalone","background_color":"#ebe7df","theme_color":"#f4f1ea","lang":"fr","description":"Le guide personnalisé de mes journées"}
+{"name":"Ma Vie — le guide de mes journées","short_name":"Ma Vie","start_url":"./","display":"standalone","background_color":"#bfe9ef","theme_color":"#0e7484","lang":"fr","description":"Le guide personnalisé de mes journées","icons":[{"src":"icon-192.png","sizes":"192x192","type":"image/png"},{"src":"icon-512.png","sizes":"512x512","type":"image/png"}]}
