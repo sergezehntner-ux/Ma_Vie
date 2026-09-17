@@ -145,3 +145,17 @@ body[data-weather="snow"] .rain{
 
 /* Le voile décoratif de v0.1.005 n'est plus nécessaire */
 .weather-scene:before{display:none}
+
+/* v0.1.007 — transparence affinée */
+.card{
+  background:rgba(250,253,252,.38);
+}
+.quickbar{
+  background:rgba(248,255,255,.42);
+}
+.demo-panel{
+  background:rgba(255,255,255,.42);
+}
+.metric{
+  background:rgba(255,255,255,.58);
+}
