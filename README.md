@@ -17,3 +17,7 @@ Principe directeur : **« Est-ce que cette information sera utile pour moi ? »*
 - boutons de démonstration en bas pour tester ces états.
 
 Toutes les données de cette version sont fictives. Les connexions aux vraies sources viendront après validation de l'ergonomie.
+
+### v0.1.002
+- écran plié densifié : marges, cartes, « Pour moi » et « À savoir » plus compacts ;
+- écran déplié volontairement conservé presque inchangé.
