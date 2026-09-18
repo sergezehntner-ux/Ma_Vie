@@ -11,8 +11,8 @@ $('#demoPeriod').onchange=e=>ambience($('#demoWeather').value,e.target.value);
 $('#autoAmbience').onclick=()=>ambience($('#demoWeather').value,period(new Date().getHours()));
 const n=new Date(),lab=new Intl.DateTimeFormat('fr-CH',{weekday:'short',day:'numeric',month:'short'}).format(n);
 $('#todayLabel').textContent=lab.charAt(0).toUpperCase()+lab.slice(1);ambience('sun',period(n.getHours()));
-document.querySelector('.version').textContent='v0.1.022 · Agenda intelligent';
-document.querySelector('.demo-panel summary').textContent='Démo v0.1.022';
+document.querySelector('.version').textContent='v0.1.023 · Agenda intelligent';
+document.querySelector('.demo-panel summary').textContent='Démo v0.1.023';
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
 
 function wmo(c){c=+c;if(c===0)return'sun';if([1,2,3].includes(c))return'cloud';if([45,48].includes(c))return'fog';if([71,73,75,77,85,86].includes(c))return'snow';if([95,96,99].includes(c))return'storm';if([51,53,55,56,57,61,63,65,66,67,80,81,82].includes(c))return'rain';return'cloud'}
@@ -23,7 +23,7 @@ async function place(lat,lon){try{let r=await fetch(`https://api.bigdatacloud.ne
 async function weather(){if(!navigator.geolocation)return;navigator.geolocation.getCurrentPosition(async p=>{try{let lat=p.coords.latitude,lon=p.coords.longitude,[r,pl]=await Promise.all([fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day&daily=sunrise,sunset&timezone=auto&forecast_days=1`,{cache:'no-store'}),place(lat,lon)]),d=await r.json(),c=d.current,sr=d.daily?.sunrise?.[0],ss=d.daily?.sunset?.[0],x={weather:wmo(c.weather_code),period:solarPeriod(c.time,sr,ss,c.is_day),temperature:Math.round(c.temperature_2m),place:pl};applyWeather(x);localStorage.setItem('maVieWeather',JSON.stringify(x))}catch{let x=JSON.parse(localStorage.getItem('maVieWeather')||'null');if(x)applyWeather(x)}},()=>{let x=JSON.parse(localStorage.getItem('maVieWeather')||'null');if(x)applyWeather(x)},{timeout:10000,maximumAge:900000})}
 window.addEventListener('load',weather);setInterval(weather,900000);
 
-// v0.1.022 — alignement agenda, demain sur deux lignes, contraste nuit
+// v0.1.023 — demain: deux vraies lignes sans superposition
 const sod=d=>{let x=new Date(d);x.setHours(0,0,0,0);return x};
 const hm=d=>d.toLocaleTimeString('fr-CH',{hour:'2-digit',minute:'2-digit',hour12:false});
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -69,11 +69,12 @@ function renderAgenda(ev,real){
 }
 function refreshAgenda(){let a=androidEvents();renderAgenda(a===null?demo():a,a!==null)}
 
-function installV022Layout(){
+function installV023Layout(){
  document.querySelector('.tasks')?.remove();
  document.querySelector('#v021-layout')?.remove();
+ document.querySelector('#v022-layout')?.remove();
  const st=document.createElement('style');
- st.id='v022-layout';
+ st.id='v023-layout';
  st.textContent=`
    .version{font-weight:800!important;opacity:1!important}
    body[data-period="night"] .version{color:#d8f3ff!important;text-shadow:0 1px 5px #001b2d}
@@ -96,9 +97,12 @@ function installV022Layout(){
 
    /* Demain : rendez-vous complet sur la 1re ligne, lieu + fin sur la 2e. */
    .tomorrow-card .appointment.timed-tomorrow{grid-template-columns:48px minmax(0,1fr) 20px;column-gap:2px;align-items:start}
+   .tomorrow-card .timed-tomorrow .appointment-main{display:flex!important;flex-direction:column!important;align-items:stretch!important;min-width:0!important;position:static!important}
+   .tomorrow-card .timed-tomorrow .appointment-main strong{display:block!important;position:static!important;float:none!important;width:auto!important;max-width:none!important;margin:0!important;padding:0!important}
+   .tomorrow-card .timed-tomorrow .appointment-main small{display:block!important;position:static!important;float:none!important;clear:both!important;transform:none!important;inset:auto!important;width:auto!important;max-width:none!important;margin:2px 0 0 0!important;padding:0!important;white-space:nowrap!important}
    .tomorrow-card .timed-tomorrow .appointment-main{min-width:0}
    .tomorrow-card .timed-tomorrow strong{white-space:nowrap!important;overflow:visible!important;text-overflow:clip!important}
-   .tomorrow-card .timed-tomorrow small{display:block;font-size:.70rem;line-height:1.18;margin:1px 0 0 0}
+   .tomorrow-card .timed-tomorrow small{display:block!important;position:static!important;font-size:.70rem;line-height:1.18;margin:2px 0 0 0!important}
 
    /* Les informations secondaires restent lisibles sur le fond nuit. */
    body[data-period="night"] .appointment small,
@@ -118,5 +122,5 @@ function installV022Layout(){
    }`;
  document.head.appendChild(st);
 }
-installV022Layout();
+installV023Layout();
 window.addEventListener('load',refreshAgenda);setInterval(refreshAgenda,60000);
