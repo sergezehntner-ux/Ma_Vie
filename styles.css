@@ -171,10 +171,46 @@ body[data-weather="snow"] .rain{
 @media(max-width:699px){.weather-place{font-size:.66rem;margin-top:1px}.quickbar button img{width:27px;height:27px;border-radius:6px}}
 
 
-/* v0.1.018 — rendez-vous de demain compact */
-.tomorrow-card .appointment{grid-template-columns:auto minmax(0,1fr);column-gap:12px;align-items:start}
-.tomorrow-card .appointment time,.tomorrow-card .appointment strong{font-size:.78rem;line-height:1.22}
-.tomorrow-card .appointment>div{min-width:0}
-.tomorrow-card .appointment strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tomorrow-card .appointment small{display:block;font-size:.70rem;line-height:1.18;margin-top:2px;color:var(--muted);white-space:nowrap}
-@media(max-width:699px){.tomorrow-card .appointment time,.tomorrow-card .appointment strong{font-size:.76rem}.tomorrow-card .appointment small{font-size:.68rem}}
+/* v0.1.019 — DEMAIN : présentation de référence v0.1.016 */
+.tomorrow-card .appointment.timed-tomorrow{
+  display:grid;
+  grid-template-columns:48px minmax(0,1fr) 22px;
+  column-gap:7px;
+  align-items:start;
+  padding:4px 0 10px;
+}
+.tomorrow-card .timed-tomorrow time,
+.tomorrow-card .timed-tomorrow strong{
+  font-size:.78rem;
+  line-height:1.22;
+}
+.tomorrow-card .timed-tomorrow time{font-weight:500;white-space:nowrap}
+.tomorrow-card .timed-tomorrow .appointment-main{min-width:0}
+.tomorrow-card .timed-tomorrow strong{
+  display:block;
+  white-space:nowrap;
+  overflow:visible;
+  text-overflow:clip;
+}
+.tomorrow-card .timed-tomorrow small{
+  display:block;
+  margin-top:2px;
+  font-size:.70rem;
+  line-height:1.18;
+  color:var(--muted);
+  white-space:nowrap;
+}
+.tomorrow-card .appointment-pin{
+  display:block;
+  font-size:.90rem;
+  line-height:1.15;
+  text-align:right;
+  filter:grayscale(1);
+}
+@media(max-width:699px){
+  .tomorrow-card .appointment.timed-tomorrow{grid-template-columns:44px minmax(0,1fr) 20px;column-gap:5px}
+  .tomorrow-card .timed-tomorrow time,
+  .tomorrow-card .timed-tomorrow strong{font-size:.74rem}
+  .tomorrow-card .timed-tomorrow small{font-size:.67rem}
+  .tomorrow-card .appointment-pin{font-size:.82rem}
+}
