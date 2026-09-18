@@ -170,24 +170,11 @@ body[data-weather="snow"] .rain{
 @media(min-width:700px){.weather-place{font-size:.82rem}.quickbar button img{width:38px;height:38px;border-radius:9px}.quickbar span{font-size:.72rem}}
 @media(max-width:699px){.weather-place{font-size:.66rem;margin-top:1px}.quickbar button img{width:27px;height:27px;border-radius:6px}}
 
-/* v0.1.017 — aperçu de demain plus compact : heure et intitulé à la même taille */
-.tomorrow-card .appointment{
-  grid-template-columns:48px minmax(0,1fr);
-  gap:7px;
-  align-items:start;
-}
-.tomorrow-card .appointment time,
-.tomorrow-card .appointment strong{
-  font-size:.82rem;
-  line-height:1.22;
-}
-.tomorrow-card .appointment small{
-  font-size:.74rem;
-  line-height:1.18;
-}
-@media(max-width:699px){
-  .tomorrow-card .appointment{grid-template-columns:44px minmax(0,1fr);gap:5px}
-  .tomorrow-card .appointment time,
-  .tomorrow-card .appointment strong{font-size:.78rem}
-  .tomorrow-card .appointment small{font-size:.70rem}
-}
+
+/* v0.1.018 — rendez-vous de demain compact */
+.tomorrow-card .appointment{grid-template-columns:auto minmax(0,1fr);column-gap:12px;align-items:start}
+.tomorrow-card .appointment time,.tomorrow-card .appointment strong{font-size:.78rem;line-height:1.22}
+.tomorrow-card .appointment>div{min-width:0}
+.tomorrow-card .appointment strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tomorrow-card .appointment small{display:block;font-size:.70rem;line-height:1.18;margin-top:2px;color:var(--muted);white-space:nowrap}
+@media(max-width:699px){.tomorrow-card .appointment time,.tomorrow-card .appointment strong{font-size:.76rem}.tomorrow-card .appointment small{font-size:.68rem}}
