@@ -11,8 +11,8 @@ $('#demoPeriod').onchange=e=>ambience($('#demoWeather').value,e.target.value);
 $('#autoAmbience').onclick=()=>ambience($('#demoWeather').value,period(new Date().getHours()));
 const n=new Date(),lab=new Intl.DateTimeFormat('fr-CH',{weekday:'short',day:'numeric',month:'short'}).format(n);
 $('#todayLabel').textContent=lab.charAt(0).toUpperCase()+lab.slice(1);ambience('sun',period(n.getHours()));
-document.querySelector('.version').textContent='v0.1.021 · Agenda intelligent';
-document.querySelector('.demo-panel summary').textContent='Démo v0.1.021';
+document.querySelector('.version').textContent='v0.1.022 · Agenda intelligent';
+document.querySelector('.demo-panel summary').textContent='Démo v0.1.022';
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
 
 function wmo(c){c=+c;if(c===0)return'sun';if([1,2,3].includes(c))return'cloud';if([45,48].includes(c))return'fog';if([71,73,75,77,85,86].includes(c))return'snow';if([95,96,99].includes(c))return'storm';if([51,53,55,56,57,61,63,65,66,67,80,81,82].includes(c))return'rain';return'cloud'}
@@ -23,7 +23,7 @@ async function place(lat,lon){try{let r=await fetch(`https://api.bigdatacloud.ne
 async function weather(){if(!navigator.geolocation)return;navigator.geolocation.getCurrentPosition(async p=>{try{let lat=p.coords.latitude,lon=p.coords.longitude,[r,pl]=await Promise.all([fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day&daily=sunrise,sunset&timezone=auto&forecast_days=1`,{cache:'no-store'}),place(lat,lon)]),d=await r.json(),c=d.current,sr=d.daily?.sunrise?.[0],ss=d.daily?.sunset?.[0],x={weather:wmo(c.weather_code),period:solarPeriod(c.time,sr,ss,c.is_day),temperature:Math.round(c.temperature_2m),place:pl};applyWeather(x);localStorage.setItem('maVieWeather',JSON.stringify(x))}catch{let x=JSON.parse(localStorage.getItem('maVieWeather')||'null');if(x)applyWeather(x)}},()=>{let x=JSON.parse(localStorage.getItem('maVieWeather')||'null');if(x)applyWeather(x)},{timeout:10000,maximumAge:900000})}
 window.addEventListener('load',weather);setInterval(weather,900000);
 
-// v0.1.021 — typographie agenda harmonisée, demain sur deux lignes
+// v0.1.022 — alignement agenda, demain sur deux lignes, contraste nuit
 const sod=d=>{let x=new Date(d);x.setHours(0,0,0,0);return x};
 const hm=d=>d.toLocaleTimeString('fr-CH',{hour:'2-digit',minute:'2-digit',hour12:false});
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -69,27 +69,42 @@ function renderAgenda(ev,real){
 }
 function refreshAgenda(){let a=androidEvents();renderAgenda(a===null?demo():a,a!==null)}
 
-function installV021Layout(){
+function installV022Layout(){
  document.querySelector('.tasks')?.remove();
+ document.querySelector('#v021-layout')?.remove();
  const st=document.createElement('style');
- st.id='v021-layout';
+ st.id='v022-layout';
  st.textContent=`
    .version{font-weight:800!important;opacity:1!important}
    body[data-period="night"] .version{color:#d8f3ff!important;text-shadow:0 1px 5px #001b2d}
    .now-card,.tomorrow-card{min-height:0}
+
+   /* Même gabarit à gauche : gâteau ou heure = 48 px, puis seulement 2 px d'écart. */
    .appointment.compact-row{grid-template-columns:48px minmax(0,1fr);column-gap:2px;align-items:start;padding:4px 0 8px}
-   .appointment.compact-row time{width:48px;white-space:nowrap}
+   .appointment.compact-row time{display:block;width:48px;margin:0;padding:0;white-space:nowrap;line-height:1.22}
+   .appointment.compact-row>div{min-width:0;margin:0;padding:0}
+   .appointment.compact-row strong{display:block;margin:0;padding:0;line-height:1.22}
    .appointment.all-day.compact-row time{text-align:left}
+
+   /* Aujourd'hui et demain : strictement la même taille et la même hauteur de ligne. */
    .appointment.all-day.compact-row strong,
    .now-card .appointment.compact-row time,
    .now-card .appointment.compact-row strong,
    .tomorrow-card .timed-tomorrow time,
-   .tomorrow-card .timed-tomorrow strong{font-size:.78rem;line-height:1.22}
+   .tomorrow-card .timed-tomorrow strong{font-size:.74rem!important;line-height:1.22!important}
    .birthday-age{font-weight:500;margin-left:.25em}
-   .tomorrow-card .appointment.timed-tomorrow{grid-template-columns:48px minmax(0,1fr) 20px;column-gap:2px}
+
+   /* Demain : rendez-vous complet sur la 1re ligne, lieu + fin sur la 2e. */
+   .tomorrow-card .appointment.timed-tomorrow{grid-template-columns:48px minmax(0,1fr) 20px;column-gap:2px;align-items:start}
    .tomorrow-card .timed-tomorrow .appointment-main{min-width:0}
-   .tomorrow-card .timed-tomorrow strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-   .tomorrow-card .timed-tomorrow small{font-size:.70rem;line-height:1.18;margin-top:1px}
+   .tomorrow-card .timed-tomorrow strong{white-space:nowrap!important;overflow:visible!important;text-overflow:clip!important}
+   .tomorrow-card .timed-tomorrow small{display:block;font-size:.70rem;line-height:1.18;margin:1px 0 0 0}
+
+   /* Les informations secondaires restent lisibles sur le fond nuit. */
+   body[data-period="night"] .appointment small,
+   body[data-period="night"] .now-card .appointment small,
+   body[data-period="night"] .tomorrow-card .appointment small{color:rgba(225,239,247,.86)!important;opacity:1!important;text-shadow:0 1px 2px rgba(0,20,35,.35)}
+
    @media(max-width:699px){
      .appointment.compact-row{grid-template-columns:44px minmax(0,1fr);column-gap:2px}
      .appointment.compact-row time{width:44px}
@@ -98,10 +113,10 @@ function installV021Layout(){
      .now-card .appointment.compact-row time,
      .now-card .appointment.compact-row strong,
      .tomorrow-card .timed-tomorrow time,
-     .tomorrow-card .timed-tomorrow strong{font-size:.74rem}
-     .tomorrow-card .timed-tomorrow small{font-size:.67rem}
+     .tomorrow-card .timed-tomorrow strong{font-size:.70rem!important}
+     .tomorrow-card .timed-tomorrow small{font-size:.66rem}
    }`;
  document.head.appendChild(st);
 }
-installV021Layout();
+installV022Layout();
 window.addEventListener('load',refreshAgenda);setInterval(refreshAgenda,60000);
