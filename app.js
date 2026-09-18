@@ -11,8 +11,8 @@ $('#demoPeriod').onchange=e=>ambience($('#demoWeather').value,e.target.value);
 $('#autoAmbience').onclick=()=>ambience($('#demoWeather').value,period(new Date().getHours()));
 const n=new Date(),lab=new Intl.DateTimeFormat('fr-CH',{weekday:'short',day:'numeric',month:'short'}).format(n);
 $('#todayLabel').textContent=lab.charAt(0).toUpperCase()+lab.slice(1);ambience('sun',period(n.getHours()));
-document.querySelector('.version').textContent='v0.1.014 · Agenda réel';
-document.querySelector('.demo-panel summary').textContent='Démo v0.1.014';
+document.querySelector('.version').textContent='v0.1.015 · Agenda intelligent';
+document.querySelector('.demo-panel summary').textContent='Démo v0.1.015';
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
 
 function wmo(c){c=+c;if(c===0)return'sun';if([1,2,3].includes(c))return'cloud';if([45,48].includes(c))return'fog';if([71,73,75,77,85,86].includes(c))return'snow';if([95,96,99].includes(c))return'storm';if([51,53,55,56,57,61,63,65,66,67,80,81,82].includes(c))return'rain';return'cloud'}
@@ -22,17 +22,21 @@ async function place(lat,lon){try{let r=await fetch(`https://api.bigdatacloud.ne
 async function weather(){if(!navigator.geolocation)return;navigator.geolocation.getCurrentPosition(async p=>{try{let lat=p.coords.latitude,lon=p.coords.longitude,[r,pl]=await Promise.all([fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day&timezone=auto&forecast_days=1`,{cache:'no-store'}),place(lat,lon)]),d=await r.json(),c=d.current,x={weather:wmo(c.weather_code),period:rperiod(c.time,c.is_day),temperature:Math.round(c.temperature_2m),place:pl};applyWeather(x);localStorage.setItem('maVieWeather',JSON.stringify(x))}catch{let x=JSON.parse(localStorage.getItem('maVieWeather')||'null');if(x)applyWeather(x)}},()=>{let x=JSON.parse(localStorage.getItem('maVieWeather')||'null');if(x)applyWeather(x)},{timeout:10000,maximumAge:900000})}
 window.addEventListener('load',weather);setInterval(weather,900000);
 
-// v0.1.014 — lecture réelle de l'agenda Android
+// v0.1.015 — agenda Android : rendez-vous, journées, anniversaires et jours fériés
 const sod=d=>{let x=new Date(d);x.setHours(0,0,0,0);return x};
 const hm=d=>d.toLocaleTimeString('fr-CH',{hour:'2-digit',minute:'2-digit',hour12:false});
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-function state(ev,now=new Date()){let t=sod(now),tom=new Date(t);tom.setDate(tom.getDate()+1);let aft=new Date(tom);aft.setDate(aft.getDate()+1);return{today:ev.filter(e=>e.end>now&&e.start<tom).sort((a,b)=>a.start-b.start),tomorrow:ev.filter(e=>e.start>=tom&&e.start<aft).sort((a,b)=>a.start-b.start)}}
+function state(ev,now=new Date()){let t=sod(now),tom=new Date(t);tom.setDate(tom.getDate()+1);let aft=new Date(tom);aft.setDate(aft.getDate()+1);return{today:ev.filter(e=>e.end>now&&e.start<tom).sort((a,b)=>(a.allDay-b.allDay)||a.start-b.start),tomorrow:ev.filter(e=>e.start<aft&&e.end>tom).sort((a,b)=>(a.allDay-b.allDay)||a.start-b.start)}}
 function androidEvents(){if(!window.MaVieAndroid||typeof window.MaVieAndroid.getEvents!=='function')return null;try{return JSON.parse(window.MaVieAndroid.getEvents()||'[]').map(e=>({title:e.title||'(Sans titre)',place:e.place||'',start:new Date(+e.start),end:new Date(+e.end),calendar:e.calendar||'',allDay:!!e.allDay})).filter(e=>!isNaN(e.start)&&!isNaN(e.end)&&!/week numbers/i.test(e.calendar))}catch(e){console.warn(e);return[]}}
-function demo(){let now=new Date(),at=(o,h,m,t,p)=>{let d=new Date(now);d.setDate(d.getDate()+o);d.setHours(h,m,0,0);return{title:t,place:p,start:d,end:new Date(d.getTime()+3600000),allDay:false}};return[at(0,20,0,'Atelier de patois','Fribourg'),at(1,9,30,'Romont',''),at(1,14,0,'Épalinges','')]}
+function demo(){let now=new Date(),at=(o,h,m,t,p,dur=60)=>{let d=new Date(now);d.setDate(d.getDate()+o);d.setHours(h,m,0,0);return{title:t,place:p,start:d,end:new Date(d.getTime()+dur*60000),allDay:false}};return[at(0,20,0,'Atelier de patois','Fribourg'),at(1,7,45,'Sortie PPG au Beatenberg','Siviriez - Beatenbucht - Be',615)]}
+function dayKind(e){let x=(e.title+' '+e.calendar).toLowerCase();if(/anniversaire de mariage|mariage|wedding/.test(x))return{icon:'💍',label:'Anniversaire de mariage'};if(/anniversaire|birthday|geburtstag/.test(x)||/\b\d{1,3}\s*$/.test(e.title))return{icon:'🎂',label:'Anniversaire'};if(/jour férié|férié|holiday|feiertag|jeûne fédéral/.test(x))return{icon:'🇨🇭',label:'Jour férié'};return{icon:'•',label:'Toute la journée'}}
+function allDayTitle(e){let k=dayKind(e),t=e.title.replace(/\s*-\s*anniversaire\s*$/i,'').trim();return`${k.icon} ${esc(t)}`}
+function todayRow(e){if(e.allDay)return`<div class="appointment"><time aria-label="${esc(dayKind(e).label)}">${dayKind(e).icon}</time><div><strong>${esc(e.title.replace(/\s*-\s*anniversaire\s*$/i,'').trim())}</strong>${e.place?`<small>${esc(e.place)}</small>`:''}</div></div>`;return`<div class="appointment"><time>${hm(e.start)}</time><div><strong>${esc(e.title)}</strong>${e.place?`<small>${esc(e.place)}</small>`:''}</div></div>`}
+function tomorrowRow(e){if(e.allDay)return`<div><strong>${dayKind(e).icon}</strong><span>${esc(e.title.replace(/\s*-\s*anniversaire\s*$/i,'').trim())}</span></div>`;let meta=[];if(e.end>e.start)meta.push(`jusqu’à ${hm(e.end)}`);if(e.place)meta.push(esc(e.place));return`<div><strong>${hm(e.start)}</strong><span>${esc(e.title)}${meta.length?`<small style="display:block;color:var(--muted);margin-top:1px">${meta.join(' · ')}</small>`:''}</span></div>`}
 function renderAgenda(ev,real){
  let s=state(ev),ta=$('#todayAppointments'),te=$('#todayEmpty'),tl=$('#tomorrowAppointments'),tme=$('#tomorrowEmpty');
- if(s.today.length){ta.innerHTML=s.today.map(e=>`<div class="appointment"><time>${e.allDay?'Journée':hm(e.start)}</time><div><strong>${esc(e.title)}</strong>${e.place?`<small>${esc(e.place)}</small>`:''}</div></div>`).join('');ta.classList.remove('hidden');te.classList.add('hidden')}else{ta.innerHTML='';ta.classList.add('hidden');te.classList.remove('hidden')}
- if(s.tomorrow.length){tl.innerHTML=s.tomorrow.map(e=>`<div><strong>${e.allDay?'Journée':hm(e.start)}</strong><span>${esc(e.title)}</span></div>`).join('');tl.classList.remove('hidden');tme.classList.add('hidden')}else{tl.innerHTML='';tl.classList.add('hidden');tme.classList.remove('hidden')}
+ if(s.today.length){ta.innerHTML=s.today.map(todayRow).join('');ta.classList.remove('hidden');te.classList.add('hidden')}else{ta.innerHTML='';ta.classList.add('hidden');te.classList.remove('hidden')}
+ if(s.tomorrow.length){tl.innerHTML=s.tomorrow.map(tomorrowRow).join('');tl.classList.remove('hidden');tme.classList.add('hidden')}else{tl.innerHTML='';tl.classList.add('hidden');tme.classList.remove('hidden')}
  document.documentElement.dataset.agendaSource=real?'android':'demo';
 }
 function refreshAgenda(){let a=androidEvents();renderAgenda(a===null?demo():a,a!==null)}
