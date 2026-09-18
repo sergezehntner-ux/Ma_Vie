@@ -1,4 +1,4 @@
-const CACHE = "ma-vie-v0.1.008";
+const CACHE = "ma-vie-v0.1.009";
 const CORE = [
   "./",
   "./index.html",
