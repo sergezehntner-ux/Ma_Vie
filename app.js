@@ -78,5 +78,78 @@ function mvRenderAgenda(){
     }
   }
 }
-window.addEventListener("load",mvRenderAgenda);
-setInterval(mvRenderAgenda,60000);
+
+// v0.1.013 — source Agenda : pont Android si disponible, sinon démonstration
+function mvAndroidEvents(){
+  if(!window.MaVieAndroid || typeof window.MaVieAndroid.getEvents!=="function") return null;
+  try{
+    const raw=window.MaVieAndroid.getEvents();
+    const rows=JSON.parse(raw||"[]");
+    return rows.map(e=>({
+      id:e.id,
+      title:e.title||"(Sans titre)",
+      place:e.place||"",
+      start:new Date(Number(e.start)),
+      end:new Date(Number(e.end)),
+      calendarId:e.calendarId,
+      calendar:e.calendar||"",
+      allDay:!!e.allDay
+    })).filter(e=>!Number.isNaN(e.start.getTime())&&!Number.isNaN(e.end.getTime()));
+  }catch(err){
+    console.warn("Ma Vie : lecture agenda Android impossible",err);
+    return [];
+  }
+}
+
+function mvRenderAgendaFrom(events){
+  const now=new Date(), state=mvAgendaState(events,now);
+  const cards=[...document.querySelectorAll(".card")];
+  const nowCard=cards.find(c=>c.textContent.includes("MAINTENANT"));
+  const tomorrowCard=cards.find(c=>c.textContent.includes("DEMAIN"));
+
+  if(nowCard){
+    const main=nowCard.querySelector(".appointment");
+    if(main){
+      if(state.todayRelevant.length){
+        const e=state.todayRelevant[0];
+        main.innerHTML =
+          `<div class="time">${e.allDay?"Toute la journée":mvHHMM(e.start)}</div>`+
+          `<div><div class="appt-title">${e.title}</div>`+
+          `<div class="place">${e.place||""}</div></div>`;
+      }else{
+        main.innerHTML='<div class="empty-agenda">✓ Plus de rendez-vous prévu aujourd’hui.</div>';
+      }
+    }
+  }
+
+  if(tomorrowCard){
+    const list=tomorrowCard.querySelector(".tomorrow-list");
+    if(list){
+      if(state.tomorrowEvents.length){
+        list.innerHTML=state.tomorrowEvents.map(e=>
+          `<div><strong>${e.allDay?"Journée":mvHHMM(e.start)}</strong><span>${e.title}</span></div>`
+        ).join("");
+      }else{
+        list.innerHTML=
+          '<div class="empty-agenda"><strong>Demain, aucun rendez-vous n’est prévu.</strong>'+
+          '<br><span>🌿 Envie d’une découverte ?</span>'+
+          '<br><span>🧞 Envie de faire un peu de ménage ?</span></div>';
+      }
+    }
+  }
+}
+
+function mvRefreshAgenda(){
+  const android=mvAndroidEvents();
+  if(android!==null){
+    mvRenderAgendaFrom(android);
+    document.documentElement.dataset.agendaSource="android";
+  }else{
+    // Dans Edge/GitHub Pages, conserver exactement la démo déjà validée.
+    mvRenderAgenda();
+    document.documentElement.dataset.agendaSource="demo";
+  }
+}
+
+window.addEventListener("load",mvRefreshAgenda);
+setInterval(mvRefreshAgenda,60000);
