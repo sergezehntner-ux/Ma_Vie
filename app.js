@@ -23,3 +23,60 @@ function applyRealWeather(x){document.body.dataset.weather=x.weather;document.bo
 async function localizedPlace(lat,lon){try{const r=await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=fr`,{cache:"no-store"});if(!r.ok)throw 0;const d=await r.json();return d.locality||d.city||d.principalSubdivision||""}catch(e){return""}}
 async function loadRealWeather(){if(!navigator.geolocation)return;navigator.geolocation.getCurrentPosition(async p=>{try{const lat=p.coords.latitude,lon=p.coords.longitude;const [r,place]=await Promise.all([fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day&timezone=auto&forecast_days=1`,{cache:"no-store"}),localizedPlace(lat,lon)]);if(!r.ok)throw 0;const d=await r.json(),c=d.current,x={weather:wmoWeather(c.weather_code),period:realPeriod(c.time,c.is_day),temperature:Math.round(c.temperature_2m),place};applyRealWeather(x);localStorage.setItem("maVieWeather",JSON.stringify(x))}catch(e){const x=JSON.parse(localStorage.getItem("maVieWeather")||"null");if(x)applyRealWeather(x)}},()=>{const x=JSON.parse(localStorage.getItem("maVieWeather")||"null");if(x)applyRealWeather(x)},{enableHighAccuracy:false,timeout:10000,maximumAge:900000})}
 window.addEventListener("load",loadRealWeather);setInterval(loadRealWeather,15*60*1000);
+
+
+// v0.1.012 — moteur Agenda (données de démonstration aujourd'hui/demain)
+function mvStartOfDay(d){const x=new Date(d);x.setHours(0,0,0,0);return x}
+function mvSameDay(a,b){return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate()}
+function mvHHMM(d){return d.toLocaleTimeString("fr-CH",{hour:"2-digit",minute:"2-digit",hour12:false})}
+function mvDemoEvents(now){
+  const at=(dayOffset,h,m,title,place,duration=60)=>{
+    const d=new Date(now);d.setDate(d.getDate()+dayOffset);d.setHours(h,m,0,0);
+    return {title,place,start:d,end:new Date(d.getTime()+duration*60000)}
+  };
+  return [
+    at(0,9,0,"Rendez-vous passé","Fribourg",45),
+    at(0,20,0,"Atelier de patois","Fribourg",90),
+    at(1,9,30,"Romont","",60),
+    at(1,14,0,"Épalinges","",60)
+  ];
+}
+function mvAgendaState(events,now=new Date()){
+  const today=mvStartOfDay(now), tomorrow=new Date(today);tomorrow.setDate(tomorrow.getDate()+1);
+  const afterTomorrow=new Date(tomorrow);afterTomorrow.setDate(afterTomorrow.getDate()+1);
+  const todayRelevant=events.filter(e=>e.end>now && e.start<tomorrow).sort((a,b)=>a.start-b.start);
+  const tomorrowEvents=events.filter(e=>e.start>=tomorrow && e.start<afterTomorrow).sort((a,b)=>a.start-b.start);
+  return {todayRelevant,tomorrowEvents};
+}
+function mvRenderAgenda(){
+  const now=new Date(), state=mvAgendaState(mvDemoEvents(now),now);
+  const cards=[...document.querySelectorAll(".card")];
+  const nowCard=cards.find(c=>c.textContent.includes("MAINTENANT"));
+  const tomorrowCard=cards.find(c=>c.textContent.includes("DEMAIN"));
+  if(nowCard){
+    const main=nowCard.querySelector(".appointment");
+    if(state.todayRelevant.length){
+      const e=state.todayRelevant[0];
+      if(main){
+        const time=main.querySelector(".time"),title=main.querySelector(".appt-title"),place=main.querySelector(".place");
+        if(time)time.textContent=mvHHMM(e.start);
+        if(title)title.textContent=e.title;
+        if(place)place.textContent=e.place||"";
+      }
+    }else if(main){
+      main.innerHTML='<div class="empty-agenda">Plus de rendez-vous prévu aujourd’hui.</div>';
+    }
+  }
+  if(tomorrowCard){
+    const list=tomorrowCard.querySelector(".tomorrow-list");
+    if(list){
+      if(state.tomorrowEvents.length){
+        list.innerHTML=state.tomorrowEvents.map(e=>`<div><strong>${mvHHMM(e.start)}</strong><span>${e.title}</span></div>`).join("");
+      }else{
+        list.innerHTML='<div class="empty-agenda">Demain, aucun rendez-vous n’est prévu.<br><span>Envie d’une découverte ?</span></div>';
+      }
+    }
+  }
+}
+window.addEventListener("load",mvRenderAgenda);
+setInterval(mvRenderAgenda,60000);
