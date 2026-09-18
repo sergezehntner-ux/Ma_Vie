@@ -11,8 +11,8 @@ $('#demoPeriod').onchange=e=>ambience($('#demoWeather').value,e.target.value);
 $('#autoAmbience').onclick=()=>ambience($('#demoWeather').value,period(new Date().getHours()));
 const n=new Date(),lab=new Intl.DateTimeFormat('fr-CH',{weekday:'short',day:'numeric',month:'short'}).format(n);
 $('#todayLabel').textContent=lab.charAt(0).toUpperCase()+lab.slice(1);ambience('sun',period(n.getHours()));
-document.querySelector('.version').textContent='v0.1.024 · Agenda intelligent';
-document.querySelector('.demo-panel summary').textContent='Démo v0.1.024';
+document.querySelector('.version').textContent='v0.1.025 · Agenda intelligent';
+document.querySelector('.demo-panel summary').textContent='Démo v0.1.025';
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
 
 function wmo(c){c=+c;if(c===0)return'sun';if([1,2,3].includes(c))return'cloud';if([45,48].includes(c))return'fog';if([71,73,75,77,85,86].includes(c))return'snow';if([95,96,99].includes(c))return'storm';if([51,53,55,56,57,61,63,65,66,67,80,81,82].includes(c))return'rain';return'cloud'}
@@ -96,9 +96,9 @@ function installV022Layout(){
 
    /* Demain : rendez-vous complet sur la 1re ligne, lieu + fin sur la 2e. */
    .tomorrow-card .appointment.timed-tomorrow{grid-template-columns:48px minmax(0,1fr) 20px;column-gap:2px;align-items:start}
-   .tomorrow-card .timed-tomorrow .appointment-main{min-width:0}
-   .tomorrow-card .timed-tomorrow strong{white-space:nowrap!important;overflow:visible!important;text-overflow:clip!important}
-   .tomorrow-card .timed-tomorrow small{display:block;font-size:.70rem;line-height:1.18;margin:1px 0 0 0}
+   .tomorrow-card .timed-tomorrow .appointment-main{display:flex!important;flex-direction:column!important;align-items:stretch!important;min-width:0!important;position:static!important}
+   .tomorrow-card .timed-tomorrow .appointment-main strong{display:block!important;position:static!important;float:none!important;width:auto!important;max-width:none!important;margin:0!important;padding:0!important;white-space:nowrap!important;overflow:visible!important;text-overflow:clip!important}
+   .tomorrow-card .timed-tomorrow .appointment-main small{display:block!important;position:static!important;float:none!important;clear:both!important;transform:none!important;inset:auto!important;width:auto!important;max-width:none!important;margin:2px 0 0 0!important;padding:0!important;white-space:nowrap!important;font-size:.70rem;line-height:1.18}
    .now-card .appointment.compact-row small{display:block;font-size:.70rem!important;line-height:1.18!important;margin:1px 0 0 0!important}
 
    /* Les informations secondaires restent lisibles sur le fond nuit. */
