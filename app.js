@@ -11,8 +11,8 @@ $('#demoPeriod').onchange=e=>ambience($('#demoWeather').value,e.target.value);
 $('#autoAmbience').onclick=()=>ambience($('#demoWeather').value,period(new Date().getHours()));
 const n=new Date(),lab=new Intl.DateTimeFormat('fr-CH',{weekday:'short',day:'numeric',month:'short'}).format(n);
 $('#todayLabel').textContent=lab.charAt(0).toUpperCase()+lab.slice(1);ambience('sun',period(n.getHours()));
-document.querySelector('.version').textContent='v0.1.026 · Agenda intelligent';
-document.querySelector('.demo-panel summary').textContent='Démo v0.1.026';
+document.querySelector('.version').textContent='v0.1.027 · Agenda intelligent';
+document.querySelector('.demo-panel summary').textContent='Démo v0.1.027';
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
 
 function wmo(c){c=+c;if(c===0)return'sun';if([1,2,3].includes(c))return'cloud';if([45,48].includes(c))return'fog';if([71,73,75,77,85,86].includes(c))return'snow';if([95,96,99].includes(c))return'storm';if([51,53,55,56,57,61,63,65,66,67,80,81,82].includes(c))return'rain';return'cloud'}
@@ -132,6 +132,11 @@ function installV022Layout(){
    body[data-period="night"] .appointment small,
    body[data-period="night"] .now-card .appointment small,
    body[data-period="night"] .tomorrow-card .appointment small{color:rgba(225,239,247,.86)!important;opacity:1!important;text-shadow:0 1px 2px rgba(0,20,35,.35)}
+
+   /* v0.1.027 — DEMAIN : lignes plus serrées verticalement. */
+   .tomorrow-card .agenda-list{gap:4px!important}
+   .tomorrow-card .appointment{margin-top:0!important;margin-bottom:0!important}
+   .tomorrow-card .appointment.all-day.compact-row{padding-top:2px!important;padding-bottom:2px!important}
 
    @media(max-width:699px){
      .appointment.compact-row{grid-template-columns:44px minmax(0,1fr);column-gap:2px}
