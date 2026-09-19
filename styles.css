@@ -214,3 +214,39 @@ body[data-weather="snow"] .rain{
   .tomorrow-card .timed-tomorrow small{font-size:.67rem}
   .tomorrow-card .appointment-pin{font-size:.82rem}
 }
+
+
+/* v0.1.028 — en-tête : date / lieu + température */
+.day-weather-wrap{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  justify-content:flex-start;
+  gap:1px;
+  position:relative;
+  z-index:4;
+  min-width:max-content;
+}
+.day-weather-wrap #todayLabel{
+  display:block;
+  white-space:nowrap;
+}
+.weather-location{
+  display:flex;
+  align-items:baseline;
+  justify-content:flex-end;
+  gap:0;
+  white-space:nowrap;
+  font-size:.82rem;
+  line-height:1.15;
+  font-weight:600;
+}
+.weather-location:has(#weatherPlace:empty) .weather-sep{display:none}
+body[data-period="night"] .day-weather-wrap,
+body[data-period="night"] .weather-location{
+  color:rgba(255,255,255,.94);
+  text-shadow:0 1px 2px rgba(0,0,0,.35);
+}
+@media(max-width:699px){
+  .weather-location{font-size:.68rem}
+}
