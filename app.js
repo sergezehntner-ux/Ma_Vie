@@ -11,8 +11,8 @@ $('#demoPeriod').onchange=e=>ambience($('#demoWeather').value,e.target.value);
 $('#autoAmbience').onclick=()=>ambience($('#demoWeather').value,period(new Date().getHours()));
 const n=new Date(),lab=new Intl.DateTimeFormat('fr-CH',{weekday:'short',day:'numeric',month:'short'}).format(n);
 $('#todayLabel').textContent=lab.charAt(0).toUpperCase()+lab.slice(1);ambience('sun',period(n.getHours()));
-document.querySelector('.version').textContent='v0.1.025 · Agenda intelligent';
-document.querySelector('.demo-panel summary').textContent='Démo v0.1.025';
+document.querySelector('.version').textContent='v0.1.026 · Agenda intelligent';
+document.querySelector('.demo-panel summary').textContent='Démo v0.1.026';
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
 
 function wmo(c){c=+c;if(c===0)return'sun';if([1,2,3].includes(c))return'cloud';if([45,48].includes(c))return'fog';if([71,73,75,77,85,86].includes(c))return'snow';if([95,96,99].includes(c))return'storm';if([51,53,55,56,57,61,63,65,66,67,80,81,82].includes(c))return'rain';return'cloud'}
@@ -94,6 +94,33 @@ function installV022Layout(){
    .tomorrow-card .timed-tomorrow strong{font-size:.74rem!important;line-height:1.22!important}
    .birthday-age{font-weight:500;margin-left:.25em}
 
+   /* Demain : chaque événement de journée entière reste sur UNE ligne horizontale. */
+   .tomorrow-card .appointment.all-day.compact-row{
+     display:grid!important;
+     grid-template-columns:48px minmax(0,1fr)!important;
+     column-gap:2px!important;
+     align-items:start!important;
+     width:100%!important;
+   }
+   .tomorrow-card .appointment.all-day.compact-row>div{
+     display:block!important;
+     width:auto!important;
+     min-width:0!important;
+     max-width:none!important;
+     margin:0!important;
+     padding:0!important;
+   }
+   .tomorrow-card .appointment.all-day.compact-row strong{
+     display:block!important;
+     width:auto!important;
+     max-width:none!important;
+     margin:0!important;
+     padding:0!important;
+     white-space:nowrap!important;
+     overflow:visible!important;
+     text-overflow:clip!important;
+   }
+
    /* Demain : rendez-vous complet sur la 1re ligne, lieu + fin sur la 2e. */
    .tomorrow-card .appointment.timed-tomorrow{grid-template-columns:48px minmax(0,1fr) 20px;column-gap:2px;align-items:start}
    .tomorrow-card .timed-tomorrow .appointment-main{display:flex!important;flex-direction:column!important;align-items:stretch!important;min-width:0!important;position:static!important}
@@ -108,6 +135,7 @@ function installV022Layout(){
 
    @media(max-width:699px){
      .appointment.compact-row{grid-template-columns:44px minmax(0,1fr);column-gap:2px}
+     .tomorrow-card .appointment.all-day.compact-row{grid-template-columns:44px minmax(0,1fr)!important}
      .appointment.compact-row time{width:44px}
      .tomorrow-card .appointment.timed-tomorrow{grid-template-columns:44px minmax(0,1fr) 18px;column-gap:2px}
      .appointment.all-day.compact-row strong,
