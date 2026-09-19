@@ -69,8 +69,8 @@ jobs:
                   applicationId = "ch.sergezehntner.mavie"
                   minSdk = 26
                   targetSdk = 35
-                  versionCode = 29
-                  versionName = "0.1.029"
+                  versionCode = 30
+                  versionName = "0.1.030"
               }
               signingConfigs {
                   create("release") {
@@ -254,5 +254,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Ma_Vie_Android_v0.1.029
+          name: Ma_Vie_Android_v0.1.030
           path: android/app/build/outputs/apk/release/app-release.apk
