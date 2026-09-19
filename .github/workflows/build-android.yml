@@ -69,8 +69,8 @@ jobs:
                   applicationId = "ch.sergezehntner.mavie"
                   minSdk = 26
                   targetSdk = 35
-                  versionCode = 25
-                  versionName = "0.1.025"
+                  versionCode = 28
+                  versionName = "0.1.028"
               }
           }
           dependencies {
@@ -86,6 +86,8 @@ jobs:
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
               <uses-permission android:name="android.permission.INTERNET"/>
               <uses-permission android:name="android.permission.READ_CALENDAR"/>
+              <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+              <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
               <application android:label="Ma Vie" android:icon="@drawable/ic_launcher" android:roundIcon="@drawable/ic_launcher" android:usesCleartextTraffic="false" android:theme="@style/Theme.MaVie">
                   <activity android:name=".MainActivity" android:exported="true">
                       <intent-filter>
@@ -119,12 +121,32 @@ jobs:
           package ch.sergezehntner.mavie
           import android.content.Context
           import android.provider.CalendarContract
+          import android.location.LocationManager
+          import android.content.pm.PackageManager
+          import androidx.core.content.ContextCompat
           import android.webkit.JavascriptInterface
           import org.json.JSONArray
           import org.json.JSONObject
           import java.util.Calendar
 
           class CalendarBridge(private val context: Context) {
+              @JavascriptInterface
+              fun getLocation(): String {
+                  val fine = ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                  val coarse = ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                  if (!fine && !coarse) return ""
+                  val lm = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+                  val best = lm.getProviders(true).mapNotNull { provider ->
+                      try { lm.getLastKnownLocation(provider) } catch (_: SecurityException) { null }
+                  }.maxByOrNull { it.time } ?: return ""
+                  return JSONObject().apply {
+                      put("latitude", best.latitude)
+                      put("longitude", best.longitude)
+                      put("accuracy", best.accuracy)
+                      put("time", best.time)
+                  }.toString()
+              }
+
               @JavascriptInterface
               fun getEvents(): String {
                   val now = System.currentTimeMillis()
@@ -175,7 +197,7 @@ jobs:
               private lateinit var webView: WebView
               private val host="sergezehntner-ux.github.io"
               private val startUrl="https://sergezehntner-ux.github.io/Ma_Vie/"
-              private val askCalendar=registerForActivityResult(ActivityResultContracts.RequestPermission()){ if(it) webView.reload() }
+              private val askPermissions=registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()){ webView.reload() }
 
               override fun onCreate(savedInstanceState: Bundle?) {
                   super.onCreate(savedInstanceState)
@@ -191,8 +213,11 @@ jobs:
                           else { startActivity(Intent(Intent.ACTION_VIEW,u)); true }
                       }
                   }
-                  if(ContextCompat.checkSelfPermission(this,Manifest.permission.READ_CALENDAR)!=PackageManager.PERMISSION_GRANTED)
-                      askCalendar.launch(Manifest.permission.READ_CALENDAR)
+                  val missing=mutableListOf<String>()
+                  if(ContextCompat.checkSelfPermission(this,Manifest.permission.READ_CALENDAR)!=PackageManager.PERMISSION_GRANTED) missing.add(Manifest.permission.READ_CALENDAR)
+                  if(ContextCompat.checkSelfPermission(this,Manifest.permission.ACCESS_COARSE_LOCATION)!=PackageManager.PERMISSION_GRANTED) missing.add(Manifest.permission.ACCESS_COARSE_LOCATION)
+                  if(ContextCompat.checkSelfPermission(this,Manifest.permission.ACCESS_FINE_LOCATION)!=PackageManager.PERMISSION_GRANTED) missing.add(Manifest.permission.ACCESS_FINE_LOCATION)
+                  if(missing.isNotEmpty()) askPermissions.launch(missing.toTypedArray())
                   webView.loadUrl(startUrl)
               }
           }
@@ -204,5 +229,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Ma_Vie_Android_v0.1.025
+          name: Ma_Vie_Android_v0.1.028
           path: android/app/build/outputs/apk/debug/app-debug.apk
