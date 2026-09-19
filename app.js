@@ -11,8 +11,8 @@ $('#demoPeriod').onchange=e=>ambience($('#demoWeather').value,e.target.value);
 $('#autoAmbience').onclick=()=>ambience($('#demoWeather').value,period(new Date().getHours()));
 const n=new Date(),lab=new Intl.DateTimeFormat('fr-CH',{weekday:'short',day:'numeric',month:'short'}).format(n);
 $('#todayLabel').textContent=lab.charAt(0).toUpperCase()+lab.slice(1);ambience('sun',period(n.getHours()));
-document.querySelector('.version').textContent='v0.1.031 · Agenda réel';
-document.querySelector('.demo-panel summary').textContent='Démo v0.1.031';
+document.querySelector('.version').textContent='v0.1.032 · Agenda réel';
+document.querySelector('.demo-panel summary').textContent='Démo v0.1.032';
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
 
 function wmo(c){c=+c;if(c===0)return'sun';if([1,2,3].includes(c))return'cloud';if([45,48].includes(c))return'fog';if([71,73,75,77,85,86].includes(c))return'snow';if([95,96,99].includes(c))return'storm';if([51,53,55,56,57,61,63,65,66,67,80,81,82].includes(c))return'rain';return'cloud'}
@@ -70,6 +70,10 @@ function renderAgenda(ev,real){
  if(s.today.length){ta.innerHTML=s.today.map(e=>e.allDay?allDayHtml(e):timedTodayHtml(e)).join('');ta.classList.remove('hidden');te.classList.add('hidden')}else{ta.innerHTML='';ta.classList.add('hidden');te.classList.remove('hidden')}
  if(s.tomorrow.length){tl.innerHTML=s.tomorrow.map(tomorrowHtml).join('');tl.classList.remove('hidden');tme.classList.add('hidden')}else{tl.innerHTML='';tl.classList.add('hidden');tme.classList.remove('hidden')}
  document.documentElement.dataset.agendaSource=real?'android':'demo';
+ // Tant que les propositions intelligentes ne sont pas calculées à partir de vrais lieux,
+ // ne jamais afficher les exemples géographiques de la maquette avec un agenda Android réel.
+ const guide=document.querySelector('.guide-card');
+ if(guide)guide.classList.toggle('hidden',real);
 }
 function refreshAgenda(){let a=androidEvents();renderAgenda(a===null?demo():a,a!==null)}
 

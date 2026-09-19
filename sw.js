@@ -1,4 +1,4 @@
-const CACHE="ma-vie-v0.1.031",CORE=["./","./index.html","./styles.css","./app.js","./manifest.webmanifest","./icon-192.png","./icon-512.png"];
+const CACHE="ma-vie-v0.1.032",CORE=["./","./index.html","./styles.css","./app.js","./manifest.webmanifest","./icon-192.png","./icon-512.png"];
 self.addEventListener("install",e=>{self.skipWaiting();e.waitUntil(caches.open(CACHE).then(c=>c.addAll(CORE)))});
 self.addEventListener("activate",e=>e.waitUntil((async()=>{for(const k of await caches.keys())if(k.startsWith("ma-vie-")&&k!==CACHE)await caches.delete(k);await self.clients.claim()})()));
 self.addEventListener("fetch",e=>{let r=e.request;if(r.method!=="GET")return;let u=new URL(r.url),fresh=r.mode==="navigate"||(u.origin===self.location.origin&&(u.pathname.endsWith(".css")||u.pathname.endsWith(".js")));if(fresh)e.respondWith(fetch(r,{cache:"no-store"}).then(async x=>{let c=await caches.open(CACHE);c.put(r.mode==="navigate"?"./index.html":r,x.clone());return x}).catch(()=>caches.match(r.mode==="navigate"?"./index.html":r)));else e.respondWith(caches.match(r).then(x=>x||fetch(r)))});
