@@ -69,8 +69,22 @@ jobs:
                   applicationId = "ch.sergezehntner.mavie"
                   minSdk = 26
                   targetSdk = 35
-                  versionCode = 28
-                  versionName = "0.1.028"
+                  versionCode = 29
+                  versionName = "0.1.029"
+              }
+              signingConfigs {
+                  create("release") {
+                      storeFile = file("../mavie-release.jks")
+                      storePassword = System.getenv("MAVIE_KEYSTORE_PASSWORD")
+                      keyAlias = System.getenv("MAVIE_KEY_ALIAS")
+                      keyPassword = System.getenv("MAVIE_KEY_PASSWORD")
+                  }
+              }
+              buildTypes {
+                  getByName("release") {
+                      isMinifyEnabled = false
+                      signingConfig = signingConfigs.getByName("release")
+                  }
               }
           }
           dependencies {
@@ -223,11 +237,22 @@ jobs:
           }
           EOF
 
-      - name: Build APK
-        run: gradle -p android assembleDebug
+      - name: Restore permanent signing key
+        shell: bash
+        env:
+          MAVIE_KEYSTORE_BASE64: ${{ secrets.MAVIE_KEYSTORE_BASE64 }}
+        run: |
+          echo "$MAVIE_KEYSTORE_BASE64" | base64 --decode > android/mavie-release.jks
+
+      - name: Build signed APK
+        env:
+          MAVIE_KEYSTORE_PASSWORD: ${{ secrets.MAVIE_KEYSTORE_PASSWORD }}
+          MAVIE_KEY_ALIAS: ${{ secrets.MAVIE_KEY_ALIAS }}
+          MAVIE_KEY_PASSWORD: ${{ secrets.MAVIE_KEY_PASSWORD }}
+        run: gradle -p android assembleRelease
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Ma_Vie_Android_v0.1.028
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: Ma_Vie_Android_v0.1.029
+          path: android/app/build/outputs/apk/release/app-release.apk
