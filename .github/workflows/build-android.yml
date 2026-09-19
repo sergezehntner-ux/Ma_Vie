@@ -69,8 +69,8 @@ jobs:
                   applicationId = "ch.sergezehntner.mavie"
                   minSdk = 26
                   targetSdk = 35
-                  versionCode = 30
-                  versionName = "0.1.030"
+                  versionCode = 33
+                  versionName = "0.1.033"
               }
               signingConfigs {
                   create("release") {
@@ -178,7 +178,8 @@ jobs:
                       CalendarContract.Instances.EVENT_ID, CalendarContract.Instances.TITLE,
                       CalendarContract.Instances.BEGIN, CalendarContract.Instances.END,
                       CalendarContract.Instances.EVENT_LOCATION, CalendarContract.Instances.CALENDAR_ID,
-                      CalendarContract.Instances.CALENDAR_DISPLAY_NAME, CalendarContract.Instances.ALL_DAY
+                      CalendarContract.Instances.CALENDAR_DISPLAY_NAME, CalendarContract.Instances.ALL_DAY,
+                      CalendarContract.Instances.DESCRIPTION
                   )
                   val out = JSONArray()
                   context.contentResolver.query(uri,p,null,null,CalendarContract.Instances.BEGIN+" ASC")?.use { c ->
@@ -187,6 +188,7 @@ jobs:
                           put("start",c.getLong(2)); put("end",c.getLong(3))
                           put("place",c.getString(4)?:""); put("calendarId",c.getLong(5))
                           put("calendar",c.getString(6)?:""); put("allDay",c.getInt(7)==1)
+                          put("description",c.getString(8)?:"")
                       })
                   }
                   return out.toString()
@@ -254,5 +256,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Ma_Vie_Android_v0.1.030
+          name: Ma_Vie_Android_v0.1.033
           path: android/app/build/outputs/apk/release/app-release.apk
