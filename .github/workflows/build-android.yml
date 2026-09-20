@@ -65,8 +65,8 @@ jobs:
                   applicationId = "ch.sergezehntner.mavie"
                   minSdk = 26
                   targetSdk = 35
-                  versionCode = 205
-                  versionName = "0.2.5"
+                  versionCode = 206
+                  versionName = "0.2.6"
               }
               signingConfigs {
                   create("release") {
@@ -157,55 +157,35 @@ jobs:
                       put("accuracy", best.accuracy); put("time", best.time)
                   }.toString()
               }
-
-              @JavascriptInterface
-              fun openCompanion(url: String) {
+              @JavascriptInterface fun openCompanion(url: String) {
                   try {
-                      val uri = android.net.Uri.parse(url)
-                      if (uri.scheme != "https") return
-                      val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, uri).apply {
-                          addCategory(android.content.Intent.CATEGORY_BROWSABLE)
-                          addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-                      }
-                      context.startActivity(intent)
-                  } catch (_: Exception) { }
+                      val uri = android.net.Uri.parse(url); if (uri.scheme != "https") return
+                      context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, uri).apply {
+                          addCategory(android.content.Intent.CATEGORY_BROWSABLE); addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                      })
+                  } catch (_: Exception) {}
               }
-
-              @JavascriptInterface
-              fun openCalendarDay(timeMillis: Long) {
+              @JavascriptInterface fun openCalendarDay(timeMillis: Long) {
                   val uri = CalendarContract.CONTENT_URI.buildUpon().appendPath("time").appendPath(timeMillis.toString()).build()
-                  val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
-                      data = uri; addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-                  }
-                  try { context.startActivity(intent) } catch (_: Exception) { }
+                  try { context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+                      data=uri; addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                  }) } catch (_: Exception) {}
               }
-
-              @JavascriptInterface
-              fun getEvents(): String {
-                  val now = System.currentTimeMillis()
-                  val cal = Calendar.getInstance().apply {
-                      timeInMillis = now; add(Calendar.DAY_OF_YEAR, 2)
-                      set(Calendar.HOUR_OF_DAY, 23); set(Calendar.MINUTE, 59)
-                  }
-                  val uri = CalendarContract.Instances.CONTENT_URI.buildUpon().also {
-                      android.content.ContentUris.appendId(it, now)
-                      android.content.ContentUris.appendId(it, cal.timeInMillis)
+              @JavascriptInterface fun getEvents(): String {
+                  val now=System.currentTimeMillis()
+                  val cal=Calendar.getInstance().apply { timeInMillis=now; add(Calendar.DAY_OF_YEAR,2); set(Calendar.HOUR_OF_DAY,23); set(Calendar.MINUTE,59) }
+                  val uri=CalendarContract.Instances.CONTENT_URI.buildUpon().also {
+                      android.content.ContentUris.appendId(it,now); android.content.ContentUris.appendId(it,cal.timeInMillis)
                   }.build()
-                  val p = arrayOf(
-                      CalendarContract.Instances.EVENT_ID, CalendarContract.Instances.TITLE,
-                      CalendarContract.Instances.BEGIN, CalendarContract.Instances.END,
-                      CalendarContract.Instances.EVENT_LOCATION, CalendarContract.Instances.CALENDAR_ID,
-                      CalendarContract.Instances.CALENDAR_DISPLAY_NAME, CalendarContract.Instances.ALL_DAY,
-                      CalendarContract.Instances.DESCRIPTION
-                  )
-                  val out = JSONArray()
+                  val p=arrayOf(CalendarContract.Instances.EVENT_ID,CalendarContract.Instances.TITLE,CalendarContract.Instances.BEGIN,
+                      CalendarContract.Instances.END,CalendarContract.Instances.EVENT_LOCATION,CalendarContract.Instances.CALENDAR_ID,
+                      CalendarContract.Instances.CALENDAR_DISPLAY_NAME,CalendarContract.Instances.ALL_DAY,CalendarContract.Instances.DESCRIPTION)
+                  val out=JSONArray()
                   context.contentResolver.query(uri,p,null,null,CalendarContract.Instances.BEGIN+" ASC")?.use { c ->
                       while(c.moveToNext()) out.put(JSONObject().apply {
-                          put("id",c.getLong(0)); put("title",c.getString(1)?:"")
-                          put("start",c.getLong(2)); put("end",c.getLong(3))
-                          put("place",c.getString(4)?:""); put("calendarId",c.getLong(5))
-                          put("calendar",c.getString(6)?:""); put("allDay",c.getInt(7)==1)
-                          put("description",c.getString(8)?:"")
+                          put("id",c.getLong(0)); put("title",c.getString(1)?:""); put("start",c.getLong(2)); put("end",c.getLong(3))
+                          put("place",c.getString(4)?:""); put("calendarId",c.getLong(5)); put("calendar",c.getString(6)?:"")
+                          put("allDay",c.getInt(7)==1); put("description",c.getString(8)?:"")
                       })
                   }
                   return out.toString()
@@ -213,162 +193,212 @@ jobs:
           }
           EOF
 
+          cat > android/app/src/main/java/ch/sergezehntner/mavie/SecretBox.kt <<'EOF'
+          package ch.sergezehntner.mavie
+          import android.security.keystore.KeyGenParameterSpec
+          import android.security.keystore.KeyProperties
+          import android.util.Base64
+          import java.security.KeyStore
+          import javax.crypto.Cipher
+          import javax.crypto.KeyGenerator
+          import javax.crypto.SecretKey
+          import javax.crypto.spec.GCMParameterSpec
+
+          class SecretBox(private val alias:String) {
+              private fun key():SecretKey {
+                  val ks=KeyStore.getInstance("AndroidKeyStore").apply{load(null)}
+                  (ks.getKey(alias,null) as? SecretKey)?.let{return it}
+                  val kg=KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES,"AndroidKeyStore")
+                  kg.init(KeyGenParameterSpec.Builder(alias,KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
+                      .setBlockModes(KeyProperties.BLOCK_MODE_GCM).setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE).build())
+                  return kg.generateKey()
+              }
+              fun enc(v:String):String {
+                  val c=Cipher.getInstance("AES/GCM/NoPadding"); c.init(Cipher.ENCRYPT_MODE,key())
+                  return Base64.encodeToString(c.iv,Base64.NO_WRAP)+":"+Base64.encodeToString(c.doFinal(v.toByteArray()),Base64.NO_WRAP)
+              }
+              fun dec(v:String?):String? {
+                  if(v.isNullOrBlank()) return null
+                  return try {
+                      val p=v.split(":",limit=2); val c=Cipher.getInstance("AES/GCM/NoPadding")
+                      c.init(Cipher.DECRYPT_MODE,key(),GCMParameterSpec(128,Base64.decode(p[0],Base64.NO_WRAP)))
+                      String(c.doFinal(Base64.decode(p[1],Base64.NO_WRAP)))
+                  } catch(_:Exception){null}
+              }
+          }
+          EOF
+
           cat > android/app/src/main/java/ch/sergezehntner/mavie/EnyaqBridge.kt <<'EOF'
           package ch.sergezehntner.mavie
-
           import android.content.Context
           import android.content.Intent
           import android.app.Activity
           import android.app.AlertDialog
           import android.widget.EditText
           import android.widget.LinearLayout
-          import android.security.keystore.KeyGenParameterSpec
-          import android.security.keystore.KeyProperties
           import android.webkit.JavascriptInterface
           import org.json.JSONObject
           import java.net.HttpURLConnection
           import java.net.URL
-          import java.security.KeyStore
-          import javax.crypto.Cipher
-          import javax.crypto.KeyGenerator
-          import javax.crypto.SecretKey
-          import javax.crypto.spec.GCMParameterSpec
-          import android.util.Base64
 
-          class EnyaqBridge(private val context: Context, private val activity: Activity) {
-              private val prefs = context.getSharedPreferences("enyaq_private", Context.MODE_PRIVATE)
-              private val alias = "MaVieEnyaqKey"
+          class EnyaqBridge(private val context:Context,private val activity:Activity){
+              private val prefs=context.getSharedPreferences("enyaq_private",Context.MODE_PRIVATE)
+              private val box=SecretBox("MaVieEnyaqKey")
+              @JavascriptInterface fun configure(){ activity.runOnUiThread {
+                  val pad=(20*activity.resources.displayMetrics.density).toInt()
+                  val layout=LinearLayout(activity).apply{orientation=LinearLayout.VERTICAL;setPadding(pad,0,pad,0)}
+                  val vin=EditText(activity).apply{hint="VIN (17 caractères)";isSingleLine=true}
+                  val key=EditText(activity).apply{hint="Clé API MyŠkoda";isSingleLine=true;inputType=129}
+                  layout.addView(vin);layout.addView(key)
+                  val dlg=AlertDialog.Builder(activity).setTitle("Configurer Enyaq").setView(layout).setNegativeButton("Annuler",null).setPositiveButton("Enregistrer",null).create()
+                  dlg.setOnShowListener{dlg.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener{
+                      val v=vin.text.toString().trim().uppercase();val k=key.text.toString().trim()
+                      if(v.length!=17){vin.error="Le VIN doit contenir 17 caractères";return@setOnClickListener}
+                      if(k.isBlank()){key.error="Clé API requise";return@setOnClickListener}
+                      prefs.edit().putString("vin",box.enc(v)).putString("apiKey",box.enc(k)).apply();dlg.dismiss()
+                      (activity as? MainActivity)?.refreshEnyaq()
+                  }};dlg.show()
+              }}
+              @JavascriptInterface fun getData():String{
+                  val vin=box.dec(prefs.getString("vin",null));val api=box.dec(prefs.getString("apiKey",null))
+                  if(vin.isNullOrBlank()||api.isNullOrBlank())return JSONObject().put("setupRequired",true).toString()
+                  var c:HttpURLConnection?=null
+                  return try{
+                      c=(URL("https://public.api.connect.skoda-auto.cz/api/v1/vehicles/$vin?include=charging").openConnection() as HttpURLConnection).apply{
+                          requestMethod="GET";connectTimeout=8000;readTimeout=8000;setRequestProperty("X-API-Key",api);setRequestProperty("Accept","application/json");useCaches=false}
+                      if(c.responseCode!=200)JSONObject().put("ok",false).toString() else{
+                          val b=JSONObject(c.inputStream.bufferedReader().use{it.readText()}).getJSONObject("vehicle").getJSONObject("charging").getJSONObject("status").getJSONObject("battery")
+                          JSONObject().put("ok",true).put("percent",b.getDouble("stateOfChargeInPercent")).put("km",b.getDouble("remainingCruisingRangeInMeters")/1000.0).toString()
+                      }
+                  }catch(_:Exception){JSONObject().put("ok",false).toString()}finally{c?.disconnect()}
+              }
+              @JavascriptInterface fun openMySkoda(){try{context.packageManager.getLaunchIntentForPackage("cz.skodaauto.myskoda")?.also{it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);context.startActivity(it)}}catch(_:Exception){}}
+          }
+          EOF
 
-              private fun secretKey(): SecretKey {
-                  val ks = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
-                  (ks.getKey(alias, null) as? SecretKey)?.let { return it }
-                  val kg = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, "AndroidKeyStore")
-                  kg.init(KeyGenParameterSpec.Builder(alias,
-                      KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
-                      .setBlockModes(KeyProperties.BLOCK_MODE_GCM)
-                      .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE)
-                      .build())
-                  return kg.generateKey()
+          cat > android/app/src/main/java/ch/sergezehntner/mavie/LibreBridge.kt <<'EOF'
+          package ch.sergezehntner.mavie
+
+          import android.app.Activity
+          import android.app.AlertDialog
+          import android.content.Context
+          import android.text.InputType
+          import android.webkit.JavascriptInterface
+          import android.widget.EditText
+          import android.widget.LinearLayout
+          import org.json.JSONObject
+          import java.net.HttpURLConnection
+          import java.net.URL
+          import java.security.MessageDigest
+          import java.text.SimpleDateFormat
+          import java.util.Locale
+          import java.util.TimeZone
+
+          class LibreBridge(private val context:Context,private val activity:Activity){
+              private val prefs=context.getSharedPreferences("libre_private",Context.MODE_PRIVATE)
+              private val box=SecretBox("MaVieLibreKey")
+              private val headers=mapOf("Content-Type" to "application/json","Accept" to "application/json","product" to "llu.android","version" to "4.17.0","Cache-Control" to "no-cache")
+              private fun get(k:String)=box.dec(prefs.getString(k,null))
+              private fun put(k:String,v:String)=prefs.edit().putString(k,box.enc(v)).apply()
+              private fun clearSession(){prefs.edit().remove("token").remove("account").remove("patient").apply()}
+              private fun sha(s:String)=MessageDigest.getInstance("SHA-256").digest(s.toByteArray()).joinToString(""){"%02x".format(it)}
+              private fun base()="https://api-${prefs.getString("region","de")}.libreview.io"
+
+              @JavascriptInterface fun configure(){activity.runOnUiThread{
+                  val pad=(20*activity.resources.displayMetrics.density).toInt()
+                  val layout=LinearLayout(activity).apply{orientation=LinearLayout.VERTICAL;setPadding(pad,0,pad,0)}
+                  val email=EditText(activity).apply{hint="E-mail LibreLinkUp";isSingleLine=true;inputType=InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS}
+                  val pass=EditText(activity).apply{hint="Mot de passe LibreLinkUp";isSingleLine=true;inputType=InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD}
+                  layout.addView(email);layout.addView(pass)
+                  val dlg=AlertDialog.Builder(activity).setTitle("Configurer LibreLinkUp").setMessage("Compte secondaire uniquement. Les identifiants restent chiffrés sur ce téléphone.")
+                      .setView(layout).setNegativeButton("Annuler",null).setPositiveButton("Enregistrer",null).create()
+                  dlg.setOnShowListener{dlg.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener{
+                      val e=email.text.toString().trim();val p=pass.text.toString()
+                      if(!e.contains("@")){email.error="Adresse e-mail requise";return@setOnClickListener}
+                      if(p.isBlank()){pass.error="Mot de passe requis";return@setOnClickListener}
+                      put("email",e);put("password",p);clearSession();dlg.dismiss();(activity as? MainActivity)?.refreshLibre()
+                  }};dlg.show()
+              }}
+
+              private fun request(method:String,url:String,body:String?=null,token:String?=null,account:String?=null):Pair<Int,String>{
+                  val c=URL(url).openConnection() as HttpURLConnection
+                  return try{
+                      c.requestMethod=method;c.connectTimeout=12000;c.readTimeout=12000;c.useCaches=false
+                      headers.forEach{(k,v)->c.setRequestProperty(k,v)}
+                      if(token!=null)c.setRequestProperty("Authorization","Bearer $token")
+                      if(account!=null)c.setRequestProperty("account-id",sha(account))
+                      if(body!=null){c.doOutput=true;c.outputStream.use{it.write(body.toByteArray())}}
+                      val code=c.responseCode
+                      val stream=if(code in 200..299)c.inputStream else c.errorStream
+                      code to (stream?.bufferedReader()?.use{it.readText()}?:"")
+                  }finally{c.disconnect()}
               }
 
-              private fun encrypt(value: String): String {
-                  val c = Cipher.getInstance("AES/GCM/NoPadding")
-                  c.init(Cipher.ENCRYPT_MODE, secretKey())
-                  val iv = Base64.encodeToString(c.iv, Base64.NO_WRAP)
-                  val data = Base64.encodeToString(c.doFinal(value.toByteArray(Charsets.UTF_8)), Base64.NO_WRAP)
-                  return "$iv:$data"
-              }
-
-              private fun decrypt(value: String?): String? {
-                  if (value.isNullOrBlank()) return null
-                  return try {
-                      val parts = value.split(":", limit=2)
-                      val c = Cipher.getInstance("AES/GCM/NoPadding")
-                      c.init(Cipher.DECRYPT_MODE, secretKey(),
-                          GCMParameterSpec(128, Base64.decode(parts[0], Base64.NO_WRAP)))
-                      String(c.doFinal(Base64.decode(parts[1], Base64.NO_WRAP)), Charsets.UTF_8)
-                  } catch (_: Exception) { null }
-              }
-
-              @JavascriptInterface
-              fun configure() {
-                  activity.runOnUiThread {
-                      val pad = (20 * activity.resources.displayMetrics.density).toInt()
-                      val box = LinearLayout(activity).apply {
-                          orientation = LinearLayout.VERTICAL
-                          setPadding(pad, 0, pad, 0)
+              private fun login():Boolean{
+                  val email=get("email")?:return false;val pass=get("password")?:return false
+                  for(i in 0..1){
+                      val (code,raw)=request("POST","${base()}/llu/auth/login",JSONObject().put("email",email).put("password",pass).toString())
+                      if(code==429||code==476)return false
+                      if(code !in 200..299)return false
+                      val top=JSONObject(raw);val data=top.optJSONObject("data")?:return false
+                      if(data.optBoolean("redirect") && i==0){
+                          val r=data.optString("region").lowercase();if(r.isBlank())return false
+                          prefs.edit().putString("region",r).apply();continue
                       }
-                      val vinField = EditText(activity).apply {
-                          hint = "VIN (17 caractères)"
-                          isSingleLine = true
-                      }
-                      val keyField = EditText(activity).apply {
-                          hint = "Clé API MyŠkoda"
-                          isSingleLine = true
-                          inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
-                      }
-                      box.addView(vinField); box.addView(keyField)
-                      val dlg = AlertDialog.Builder(activity)
-                          .setTitle("Configurer Enyaq")
-                          .setView(box)
-                          .setNegativeButton("Annuler", null)
-                          .setPositiveButton("Enregistrer", null)
-                          .create()
-                      dlg.setOnShowListener {
-                          dlg.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
-                              val vin = vinField.text.toString().trim()
-                              val key = keyField.text.toString().trim()
-                              if (vin.length != 17) {
-                                  vinField.error = "Le VIN doit contenir 17 caractères"
-                                  return@setOnClickListener
-                              }
-                              if (key.isBlank()) {
-                                  keyField.error = "Clé API requise"
-                                  return@setOnClickListener
-                              }
-                              if (saveConfig(vin, key)) {
-                                  dlg.dismiss()
-                                  (activity as? MainActivity)?.refreshEnyaq()
-                              }
-                          }
-                      }
-                      dlg.show()
+                      val token=data.optJSONObject("authTicket")?.optString("token").orEmpty()
+                      val account=data.optJSONObject("user")?.optString("id").orEmpty()
+                      if(token.isBlank()||account.isBlank())return false
+                      put("token",token);put("account",account);return true
                   }
+                  return false
               }
 
-              @JavascriptInterface
-              fun saveConfig(vin: String, apiKey: String): Boolean {
-                  val v = vin.trim().uppercase()
-                  val k = apiKey.trim()
-                  if (v.length != 17 || k.isBlank()) return false
-                  return try {
-                      prefs.edit().putString("vin", encrypt(v)).putString("apiKey", encrypt(k)).apply()
-                      true
-                  } catch (_: Exception) { false }
+              private fun ensurePatient(token:String,account:String):String?{
+                  get("patient")?.let{return it}
+                  val (code,raw)=request("GET","${base()}/llu/connections",null,token,account)
+                  if(code==401)return null
+                  if(code !in 200..299)return null
+                  val a=JSONObject(raw).optJSONArray("data")?:return null
+                  if(a.length()==0)return null
+                  val id=a.optJSONObject(0)?.optString("patientId").orEmpty()
+                  if(id.isBlank())return null
+                  put("patient",id);return id
               }
 
-              @JavascriptInterface
-              fun getData(): String {
-                  val vin = decrypt(prefs.getString("vin", null))
-                  val apiKey = decrypt(prefs.getString("apiKey", null))
-                  if (vin.isNullOrBlank() || apiKey.isNullOrBlank())
-                      return JSONObject().put("setupRequired", true).toString()
-
-                  var conn: HttpURLConnection? = null
-                  return try {
-                      val url = URL("https://public.api.connect.skoda-auto.cz/api/v1/vehicles/$vin?include=charging")
-                      conn = (url.openConnection() as HttpURLConnection).apply {
-                          requestMethod = "GET"
-                          connectTimeout = 8000
-                          readTimeout = 8000
-                          setRequestProperty("X-API-Key", apiKey)
-                          setRequestProperty("Accept", "application/json")
-                          useCaches = false
-                      }
-                      if (conn.responseCode != 200)
-                          JSONObject().put("ok", false).put("status", conn.responseCode).toString()
-                      else {
-                          val body = conn.inputStream.bufferedReader().use { it.readText() }
-                          val battery = JSONObject(body).getJSONObject("vehicle")
-                              .getJSONObject("charging").getJSONObject("status").getJSONObject("battery")
-                          val percent = battery.getDouble("stateOfChargeInPercent")
-                          val km = battery.getDouble("remainingCruisingRangeInMeters") / 1000.0
-                          JSONObject().put("ok", true).put("percent", percent).put("km", km).toString()
-                      }
-                  } catch (_: Exception) {
-                      JSONObject().put("ok", false).toString()
-                  } finally { conn?.disconnect() }
+              private fun parseUtc(s:String):Long{
+                  return try{
+                      val f=SimpleDateFormat("M/d/yyyy h:mm:ss a",Locale.US);f.timeZone=TimeZone.getTimeZone("UTC");f.parse(s)?.time?:0L
+                  }catch(_:Exception){0L}
               }
+              private fun arrow(n:Int)=when(n){1->"↓↓";2->"↓";3->"↘";4->"→";5->"↗";6->"↑";7->"↑↑";else->""}
 
-              @JavascriptInterface
-              fun openMySkoda() {
-                  try {
-                      val i = context.packageManager.getLaunchIntentForPackage("cz.skodaauto.myskoda")
-                      if (i != null) {
-                          i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                          context.startActivity(i)
-                      }
-                  } catch (_: Exception) { }
+              @JavascriptInterface fun getData():String{
+                  if(get("email").isNullOrBlank()||get("password").isNullOrBlank())return JSONObject().put("setupRequired",true).toString()
+                  var token=get("token");var account=get("account")
+                  if(token.isNullOrBlank()||account.isNullOrBlank()){
+                      if(!login())return JSONObject().put("ok",false).toString()
+                      token=get("token");account=get("account")
+                  }
+                  fun fetch():JSONObject?{
+                      val t=token?:return null;val a=account?:return null;val patient=ensurePatient(t,a)?:return null
+                      val (code,raw)=request("GET","${base()}/llu/connections/$patient/graph",null,t,a)
+                      if(code==401)return JSONObject().put("_unauthorized",true)
+                      if(code !in 200..299)return null
+                      val data=JSONObject(raw).optJSONObject("data")?:return null
+                      return data.optJSONObject("connection")?.optJSONObject("glucoseMeasurement")
+                  }
+                  var m=fetch()
+                  if(m?.optBoolean("_unauthorized")==true){
+                      clearSession();if(!login())return JSONObject().put("ok",false).toString()
+                      token=get("token");account=get("account");m=fetch()
+                  }
+                  if(m==null||m.optBoolean("_unauthorized"))return JSONObject().put("ok",false).toString()
+                  val mg=m.optDouble("ValueInMgPerDl",Double.NaN)
+                  val ts=parseUtc(m.optString("FactoryTimestamp"))
+                  val age=System.currentTimeMillis()-ts
+                  val trend=m.optInt("TrendArrow",0)
+                  if(mg.isNaN()||ts<=0||age< -120000L||age>300000L||trend !in 1..7)return JSONObject().put("ok",false).toString()
+                  return JSONObject().put("ok",true).put("mmol",mg/18.0182).put("arrow",arrow(trend)).put("measuredAt",ts).toString()
               }
           }
           EOF
@@ -387,41 +417,30 @@ jobs:
           import androidx.appcompat.app.AppCompatActivity
           import androidx.core.content.ContextCompat
 
-          class MainActivity : AppCompatActivity() {
-              private lateinit var webView: WebView
+          class MainActivity:AppCompatActivity(){
+              private lateinit var webView:WebView
               private val host="sergezehntner-ux.github.io"
               private val startUrl="https://sergezehntner-ux.github.io/Ma_Vie/"
-              private val askPermissions=registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()){ webView.reload() }
-
-              fun refreshEnyaq() {
-                  runOnUiThread {
-                      webView.evaluateJavascript("window.maVieRefreshEnyaq && window.maVieRefreshEnyaq()", null)
-                  }
-              }
-
-              override fun onCreate(savedInstanceState: Bundle?) {
-                  super.onCreate(savedInstanceState)
-                  setContentView(R.layout.activity_main)
-                  webView=findViewById(R.id.webView)
-                  webView.settings.javaScriptEnabled=true
-                  webView.settings.domStorageEnabled=true
-                  webView.settings.cacheMode=WebSettings.LOAD_NO_CACHE
-                  webView.clearCache(true)
+              private val askPermissions=registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()){webView.reload()}
+              fun refreshEnyaq(){runOnUiThread{webView.evaluateJavascript("window.maVieRefreshEnyaq&&window.maVieRefreshEnyaq()",null)}}
+              fun refreshLibre(){runOnUiThread{webView.evaluateJavascript("window.maVieRefreshLibre&&window.maVieRefreshLibre()",null)}}
+              override fun onCreate(savedInstanceState:Bundle?){
+                  super.onCreate(savedInstanceState);setContentView(R.layout.activity_main);webView=findViewById(R.id.webView)
+                  webView.settings.javaScriptEnabled=true;webView.settings.domStorageEnabled=true;webView.settings.cacheMode=WebSettings.LOAD_NO_CACHE;webView.clearCache(true)
                   webView.addJavascriptInterface(CalendarBridge(this),"MaVieAndroid")
-                  webView.addJavascriptInterface(EnyaqBridge(this, this),"MaVieEnyaq")
+                  webView.addJavascriptInterface(EnyaqBridge(this,this),"MaVieEnyaq")
+                  webView.addJavascriptInterface(LibreBridge(this,this),"MaVieLibre")
                   webView.webViewClient=object:WebViewClient(){
-                      override fun shouldOverrideUrlLoading(v:WebView,r:WebResourceRequest):Boolean {
-                          val u=r.url
-                          return if(u.scheme=="https" && u.host==host) false
-                          else { startActivity(Intent(Intent.ACTION_VIEW,u)); true }
+                      override fun shouldOverrideUrlLoading(v:WebView,r:WebResourceRequest):Boolean{
+                          val u=r.url;return if(u.scheme=="https"&&u.host==host)false else{startActivity(Intent(Intent.ACTION_VIEW,u));true}
                       }
                   }
                   val missing=mutableListOf<String>()
-                  if(ContextCompat.checkSelfPermission(this,Manifest.permission.READ_CALENDAR)!=PackageManager.PERMISSION_GRANTED) missing.add(Manifest.permission.READ_CALENDAR)
-                  if(ContextCompat.checkSelfPermission(this,Manifest.permission.ACCESS_COARSE_LOCATION)!=PackageManager.PERMISSION_GRANTED) missing.add(Manifest.permission.ACCESS_COARSE_LOCATION)
-                  if(ContextCompat.checkSelfPermission(this,Manifest.permission.ACCESS_FINE_LOCATION)!=PackageManager.PERMISSION_GRANTED) missing.add(Manifest.permission.ACCESS_FINE_LOCATION)
-                  if(missing.isNotEmpty()) askPermissions.launch(missing.toTypedArray())
-                  webView.loadUrl(startUrl + "?app=0.2.5")
+                  if(ContextCompat.checkSelfPermission(this,Manifest.permission.READ_CALENDAR)!=PackageManager.PERMISSION_GRANTED)missing.add(Manifest.permission.READ_CALENDAR)
+                  if(ContextCompat.checkSelfPermission(this,Manifest.permission.ACCESS_COARSE_LOCATION)!=PackageManager.PERMISSION_GRANTED)missing.add(Manifest.permission.ACCESS_COARSE_LOCATION)
+                  if(ContextCompat.checkSelfPermission(this,Manifest.permission.ACCESS_FINE_LOCATION)!=PackageManager.PERMISSION_GRANTED)missing.add(Manifest.permission.ACCESS_FINE_LOCATION)
+                  if(missing.isNotEmpty())askPermissions.launch(missing.toTypedArray())
+                  webView.loadUrl(startUrl+"?app=0.2.6")
               }
           }
           EOF
@@ -443,5 +462,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Ma_Vie_Android_v0.2.5
+          name: Ma_Vie_Android_v0.2.6
           path: android/app/build/outputs/apk/release/app-release.apk
