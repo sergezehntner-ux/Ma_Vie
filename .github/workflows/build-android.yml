@@ -65,8 +65,8 @@ jobs:
                   applicationId = "ch.sergezehntner.mavie"
                   minSdk = 26
                   targetSdk = 35
-                  versionCode = 208
-                  versionName = "0.2.8"
+                  versionCode = 209
+                  versionName = "0.2.9"
               }
               signingConfigs {
                   create("release") {
@@ -370,7 +370,7 @@ jobs:
                       val f=SimpleDateFormat("M/d/yyyy h:mm:ss a",Locale.US);f.timeZone=TimeZone.getTimeZone("UTC");f.parse(s)?.time?:0L
                   }catch(_:Exception){0L}
               }
-              private fun arrow(n:Int)=when(n){1->"↓↓";2->"↓";3->"↘";4->"→";5->"↗";6->"↑";7->"↑↑";else->""}
+              private fun arrow(n:Int)=when(n){1->"↓";2->"↘";3->"→";4->"↗";5->"↑";else->""}
 
               @JavascriptInterface fun getData():String{
                   if(get("email").isNullOrBlank()||get("password").isNullOrBlank())return JSONObject().put("setupRequired",true).toString()
@@ -397,7 +397,7 @@ jobs:
                   val ts=parseUtc(m.optString("FactoryTimestamp"))
                   val age=System.currentTimeMillis()-ts
                   val trend=m.optInt("TrendArrow",0)
-                  if(mg.isNaN()||ts<=0||age< -120000L||age>300000L||trend !in 1..7)return JSONObject().put("ok",false).toString()
+                  if(mg.isNaN()||ts<=0||age< -120000L||age>300000L||trend !in 1..5)return JSONObject().put("ok",false).toString()
                   return JSONObject().put("ok",true).put("mmol",mg/18.0182).put("arrow",arrow(trend)).put("measuredAt",ts).toString()
               }
           }
@@ -445,7 +445,7 @@ jobs:
                   if(missing.isNotEmpty())askPermissions.launch(missing.toTypedArray())
                   val nonce=System.currentTimeMillis()
                   val headers=mapOf("Cache-Control" to "no-cache, no-store, max-age=0","Pragma" to "no-cache")
-                  webView.loadUrl(startUrl+"?app=0.2.8&t="+nonce,headers)
+                  webView.loadUrl(startUrl+"?app=0.2.9&t="+nonce,headers)
               }
           }
           EOF
@@ -467,5 +467,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Ma_Vie_Android_v0.2.8
+          name: Ma_Vie_Android_v0.2.9
           path: android/app/build/outputs/apk/release/app-release.apk
