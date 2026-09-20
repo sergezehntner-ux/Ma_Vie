@@ -1,5 +1,10 @@
 const $=s=>document.querySelector(s);
 const dlg=$('#dialog');
+
+document.querySelectorAll('[data-companion]').forEach(b=>{
+ b.addEventListener('click',()=>{window.location.href=b.dataset.companion});
+});
+
 document.querySelectorAll('.guide-item button,[data-suggestion]').forEach(b=>b.onclick=()=>{const t=b.dataset.suggestion;$('#dialogTitle').textContent=t==='djinn'?'Djinn':t==='discovery'?'Découverte':'Ma Vie';$('#dialogText').textContent=t==='djinn'?'Djinn pourra proposer quelques éléments qui attendent votre attention.':t==='discovery'?'Le futur guide pourra chercher marchés, producteurs, événements, balades et autres idées pertinentes.':'Cette action sera reliée à sa vraie source dans une prochaine version.';dlg.showModal()});
 $('#personalize').onclick=()=>{$('#dialogTitle').textContent='Pour moi';$('#dialogText').textContent='Cette zone sera personnalisable : glycémie, voiture, météo, maison et autres informations choisies par l’utilisateur.';dlg.showModal()};
 
@@ -11,8 +16,8 @@ $('#demoPeriod').onchange=e=>ambience($('#demoWeather').value,e.target.value);
 $('#autoAmbience').onclick=()=>ambience($('#demoWeather').value,period(new Date().getHours()));
 const n=new Date(),lab=new Intl.DateTimeFormat('fr-CH',{weekday:'short',day:'numeric',month:'short'}).format(n);
 $('#todayLabel').textContent=lab.charAt(0).toUpperCase()+lab.slice(1);ambience('sun',period(n.getHours()));
-document.querySelector('.version').textContent='v0.1.037 · Agenda réel';
-document.querySelector('.demo-panel summary').textContent='Démo v0.1.037';
+document.querySelector('.version').textContent='v0.2.0 · Connexions';
+document.querySelector('.demo-panel summary').textContent='Démo v0.2.0';
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
 
 function wmo(c){c=+c;if(c===0)return'sun';if([1,2,3].includes(c))return'cloud';if([45,48].includes(c))return'fog';if([71,73,75,77,85,86].includes(c))return'snow';if([95,96,99].includes(c))return'storm';if([51,53,55,56,57,61,63,65,66,67,80,81,82].includes(c))return'rain';return'cloud'}
