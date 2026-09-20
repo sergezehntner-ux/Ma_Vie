@@ -11,8 +11,8 @@ $('#demoPeriod').onchange=e=>ambience($('#demoWeather').value,e.target.value);
 $('#autoAmbience').onclick=()=>ambience($('#demoWeather').value,period(new Date().getHours()));
 const n=new Date(),lab=new Intl.DateTimeFormat('fr-CH',{weekday:'short',day:'numeric',month:'short'}).format(n);
 $('#todayLabel').textContent=lab.charAt(0).toUpperCase()+lab.slice(1);ambience('sun',period(n.getHours()));
-document.querySelector('.version').textContent='v0.1.036 · Agenda réel';
-document.querySelector('.demo-panel summary').textContent='Démo v0.1.036';
+document.querySelector('.version').textContent='v0.1.037 · Agenda réel';
+document.querySelector('.demo-panel summary').textContent='Démo v0.1.037';
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
 
 function wmo(c){c=+c;if(c===0)return'sun';if([1,2,3].includes(c))return'cloud';if([45,48].includes(c))return'fog';if([71,73,75,77,85,86].includes(c))return'snow';if([95,96,99].includes(c))return'storm';if([51,53,55,56,57,61,63,65,66,67,80,81,82].includes(c))return'rain';return'cloud'}
@@ -75,6 +75,24 @@ function renderAgenda(ev,real){
 }
 function refreshAgenda(){let a=androidEvents();renderAgenda(a===null?demo():a,a!==null)}
 
+function openCalendarDay(offset){
+ const d=sod(new Date()); d.setDate(d.getDate()+offset);
+ if(window.MaVieAndroid&&typeof window.MaVieAndroid.openCalendarDay==='function'){
+  try{window.MaVieAndroid.openCalendarDay(d.getTime())}catch(e){console.warn(e)}
+ }
+}
+function installAgendaCardLinks(){
+ [[document.querySelector('.now-card'),0],[document.querySelector('.tomorrow-card'),1]].forEach(([card,offset])=>{
+  if(!card)return;
+  card.classList.add('agenda-open-card'); card.setAttribute('role','button'); card.setAttribute('tabindex','0');
+  card.setAttribute('aria-label',offset===0?"Ouvrir l'agenda d'aujourd'hui":"Ouvrir l'agenda de demain");
+  const go=()=>openCalendarDay(offset);
+  card.addEventListener('click',go);
+  card.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();go()}});
+ });
+}
+
+
 function installV022Layout(){
  document.querySelector('.tasks')?.remove();
  document.querySelector('#v021-layout')?.remove();
@@ -82,6 +100,8 @@ function installV022Layout(){
  st.id='v022-layout';
  st.textContent=`
    .version{font-weight:800!important;opacity:1!important}
+   .agenda-open-card{cursor:pointer}
+   .agenda-open-card:focus-visible{outline:2px solid currentColor;outline-offset:2px}
    body[data-period="night"] .version{color:#d8f3ff!important;text-shadow:0 1px 5px #001b2d}
    .now-card,.tomorrow-card{min-height:0}
 
@@ -160,4 +180,5 @@ function installV022Layout(){
  document.head.appendChild(st);
 }
 installV022Layout();
+installAgendaCardLinks();
 window.addEventListener('load',refreshAgenda);setInterval(refreshAgenda,60000);
