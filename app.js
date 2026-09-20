@@ -50,11 +50,20 @@ const localKey=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-
 const allDayKey=d=>`${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
 const eventDayKey=e=>e.allDay?allDayKey(e.start):localKey(e.start);
 
+const isHoliday=e=>/jour férié|ferie|holiday|jeûne fédéral|jeune federal/i.test((e.title+' '+e.calendar).toLowerCase());
+const agendaRank=e=>isHoliday(e)?0:e.allDay?1:2;
+function agendaSort(a,b){
+ const r=agendaRank(a)-agendaRank(b);
+ if(r)return r;
+ // Les rendez-vous avec heure sont chronologiques.
+ // Pour les événements sans heure, on conserve l'ordre fourni par l'agenda.
+ return agendaRank(a)===2?a.start-b.start:0;
+}
 function state(ev,now=new Date()){
  let today=localKey(now),tomDate=sod(now);tomDate.setDate(tomDate.getDate()+1);let tomorrow=localKey(tomDate);
  return{
-  today:ev.filter(e=>e.allDay?eventDayKey(e)===today:(e.end>now&&eventDayKey(e)===today)).sort((a,b)=>(a.allDay?-1:0)-(b.allDay?-1:0)||a.start-b.start),
-  tomorrow:ev.filter(e=>eventDayKey(e)===tomorrow).sort((a,b)=>(a.allDay?1:0)-(b.allDay?1:0)||a.start-b.start)
+  today:ev.filter(e=>e.allDay?eventDayKey(e)===today:(e.end>now&&eventDayKey(e)===today)).sort(agendaSort),
+  tomorrow:ev.filter(e=>eventDayKey(e)===tomorrow).sort(agendaSort)
  };
 }
 function androidEvents(){if(!window.MaVieAndroid||typeof window.MaVieAndroid.getEvents!=='function')return null;try{return JSON.parse(window.MaVieAndroid.getEvents()||'[]').map(e=>({title:e.title||'(Sans titre)',place:e.place||'',start:new Date(+e.start),end:new Date(+e.end),calendar:e.calendar||'',allDay:!!e.allDay})).filter(e=>{if(isNaN(e.start)||isNaN(e.end))return false;let x=(e.title+' '+e.calendar).toLowerCase();return !/week\s*numbers?|num[ée]ros?\s+de\s+semaine|semaine\s+\d{1,2}/i.test(x)})}catch(e){console.warn(e);return[]}}
