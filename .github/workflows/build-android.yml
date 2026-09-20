@@ -65,8 +65,8 @@ jobs:
                   applicationId = "ch.sergezehntner.mavie"
                   minSdk = 26
                   targetSdk = 35
-                  versionCode = 203
-                  versionName = "0.2.3"
+                  versionCode = 204
+                  versionName = "0.2.4"
               }
               signingConfigs {
                   create("release") {
@@ -218,6 +218,10 @@ jobs:
 
           import android.content.Context
           import android.content.Intent
+          import android.app.Activity
+          import android.app.AlertDialog
+          import android.widget.EditText
+          import android.widget.LinearLayout
           import android.security.keystore.KeyGenParameterSpec
           import android.security.keystore.KeyProperties
           import android.webkit.JavascriptInterface
@@ -231,7 +235,7 @@ jobs:
           import javax.crypto.spec.GCMParameterSpec
           import android.util.Base64
 
-          class EnyaqBridge(private val context: Context) {
+          class EnyaqBridge(private val context: Context, private val activity: Activity) {
               private val prefs = context.getSharedPreferences("enyaq_private", Context.MODE_PRIVATE)
               private val alias = "MaVieEnyaqKey"
 
@@ -264,6 +268,52 @@ jobs:
                           GCMParameterSpec(128, Base64.decode(parts[0], Base64.NO_WRAP)))
                       String(c.doFinal(Base64.decode(parts[1], Base64.NO_WRAP)), Charsets.UTF_8)
                   } catch (_: Exception) { null }
+              }
+
+              @JavascriptInterface
+              fun configure() {
+                  activity.runOnUiThread {
+                      val pad = (20 * activity.resources.displayMetrics.density).toInt()
+                      val box = LinearLayout(activity).apply {
+                          orientation = LinearLayout.VERTICAL
+                          setPadding(pad, 0, pad, 0)
+                      }
+                      val vinField = EditText(activity).apply {
+                          hint = "VIN (17 caractères)"
+                          isSingleLine = true
+                      }
+                      val keyField = EditText(activity).apply {
+                          hint = "Clé API MyŠkoda"
+                          isSingleLine = true
+                          inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
+                      }
+                      box.addView(vinField); box.addView(keyField)
+                      val dlg = AlertDialog.Builder(activity)
+                          .setTitle("Configurer Enyaq")
+                          .setView(box)
+                          .setNegativeButton("Annuler", null)
+                          .setPositiveButton("Enregistrer", null)
+                          .create()
+                      dlg.setOnShowListener {
+                          dlg.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener {
+                              val vin = vinField.text.toString().trim()
+                              val key = keyField.text.toString().trim()
+                              if (vin.length != 17) {
+                                  vinField.error = "Le VIN doit contenir 17 caractères"
+                                  return@setOnClickListener
+                              }
+                              if (key.isBlank()) {
+                                  keyField.error = "Clé API requise"
+                                  return@setOnClickListener
+                              }
+                              if (saveConfig(vin, key)) {
+                                  dlg.dismiss()
+                                  (activity as? MainActivity)?.refreshEnyaq()
+                              }
+                          }
+                      }
+                      dlg.show()
+                  }
               }
 
               @JavascriptInterface
@@ -342,6 +392,12 @@ jobs:
               private val startUrl="https://sergezehntner-ux.github.io/Ma_Vie/"
               private val askPermissions=registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()){ webView.reload() }
 
+              fun refreshEnyaq() {
+                  runOnUiThread {
+                      webView.evaluateJavascript("window.maVieRefreshEnyaq && window.maVieRefreshEnyaq()", null)
+                  }
+              }
+
               override fun onCreate(savedInstanceState: Bundle?) {
                   super.onCreate(savedInstanceState)
                   setContentView(R.layout.activity_main)
@@ -349,7 +405,7 @@ jobs:
                   webView.settings.javaScriptEnabled=true
                   webView.settings.domStorageEnabled=true
                   webView.addJavascriptInterface(CalendarBridge(this),"MaVieAndroid")
-                  webView.addJavascriptInterface(EnyaqBridge(this),"MaVieEnyaq")
+                  webView.addJavascriptInterface(EnyaqBridge(this, this),"MaVieEnyaq")
                   webView.webViewClient=object:WebViewClient(){
                       override fun shouldOverrideUrlLoading(v:WebView,r:WebResourceRequest):Boolean {
                           val u=r.url
@@ -384,5 +440,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Ma_Vie_Android_v0.2.3
+          name: Ma_Vie_Android_v0.2.4
           path: android/app/build/outputs/apk/release/app-release.apk
