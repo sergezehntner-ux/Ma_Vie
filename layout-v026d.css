@@ -1,0 +1,56 @@
+/* Ma Vie v0.2.6d — mise en page fluide */
+@media(min-width:700px){
+  /* Les deux agendas restent côte à côte et prennent chacun leur hauteur utile. */
+  .grid{align-items:start}
+  .now-card,.tomorrow-card{min-height:0!important;height:auto}
+
+  /* À SAVOIR puis POUR MOI occupent toute la largeur. */
+  .guide-card,.personal-card{
+    grid-column:1 / -1;
+    min-height:0!important;
+    height:auto;
+  }
+
+  /* POUR MOI : tuiles larges, basses et souples. */
+  .personal-card .metrics{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    align-items:stretch;
+  }
+  .personal-card .metric{
+    min-height:0;
+    padding:7px 12px;
+  }
+  .personal-card .metric>div{min-width:0}
+  .personal-card .metric strong{
+    white-space:normal;
+    overflow-wrap:anywhere;
+  }
+
+  /* Barre des trois compagnons réellement fixée en bas de l'écran. */
+  .quickbar{
+    position:fixed!important;
+    left:50%!important;
+    right:auto!important;
+    bottom:max(8px,env(safe-area-inset-bottom))!important;
+    width:min(calc(100% - 40px),1060px);
+    transform:translateX(-50%);
+    z-index:20;
+    margin:0!important;
+  }
+  .app-shell{
+    padding-bottom:112px!important;
+  }
+}
+
+/* À SAVOIR n'occupe aucun espace tant qu'il n'a rien à dire. */
+.guide-card:has(#guideItems:empty),
+.guide-card:has(#guideItems > .hidden:only-child){
+  display:none;
+}
+
+/* Fold fermé : cartes pleine largeur et compagnons fixés comme auparavant. */
+@media(max-width:699px){
+  .guide-card,.personal-card{min-height:0!important;height:auto}
+  .personal-card .metrics{grid-template-columns:1fr!important}
+  .personal-card .metric strong{white-space:normal;overflow-wrap:anywhere}
+}
