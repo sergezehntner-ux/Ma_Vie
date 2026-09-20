@@ -5,7 +5,7 @@
 <meta name="theme-color" content="#087d89">
 <title>Ma Vie — le guide de mes journées</title>
 <link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png">
-<link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="fixes-v026.css"><link rel="stylesheet" href="layout-v026c.css"><link rel="stylesheet" href="layout-v026d.css">
+<link rel="stylesheet" href="styles.css"><link rel="stylesheet" href="fixes-v026.css"><link rel="stylesheet" href="layout-v026c.css"><link rel="stylesheet" href="layout-v026d.css"><link rel="stylesheet" href="layout-v026e.css">
 </head>
 <body data-period="day" data-weather="sun">
 <div class="weather-scene" aria-hidden="true"><div class="celestial"></div><div class="cloud c1"></div><div class="cloud c2"></div><div class="cloud c3"></div><div class="cloud c4"></div><div class="rain"></div><div class="horizon"></div></div>
@@ -21,18 +21,27 @@
     <div id="tomorrowAppointments"></div><div id="tomorrowWarning"></div>
   </article>
   <article class="card guide-card"><div class="card-title">À SAVOIR</div><div id="guideItems"></div></article>
-  <article class="card personal-card"><div class="card-title">POUR MOI</div><div class="metrics">
-    <div class="metric"><span>🩸</span><div><small>Glycémie</small><strong>—</strong></div></div>
-    <div class="metric"><span>🚙</span><div><small>Enyaq</small><strong>—</strong></div></div>
-    <div class="metric"><span>🏠</span><div><small>Maison</small><strong>OK</strong></div></div>
-  </div></article>
 </section>
 <div class="demo-panel hidden" aria-hidden="true"><summary>Démo</summary><div class="demo-controls"><button id="demoWeather"></button><button id="demoPeriod"></button><label><input id="autoAmbience" type="checkbox" checked></label></div></div>
-<nav class="quickbar">
-<button data-companion="https://sergezehntner-ux.github.io/Herbier_gourmand/"><img src="icon-herbier.png" alt=""><span>Herbier</span></button>
-<button data-companion="https://sergezehntner-ux.github.io/ma_sante/"><img src="icon-sante.png" alt=""><span>Ma Santé</span></button>
-<button data-companion="https://sergezehntner-ux.github.io/Djinn/"><img src="icon-djinn.png" alt=""><span>Djinn</span></button>
-</nav>
+
+<div class="permanent-dock">
+  <article class="card personal-card">
+    <div class="card-title">POUR MOI</div>
+    <div class="metrics">
+      <div class="metric"><span>🩸</span><div><small>Glycémie</small><strong>—</strong></div></div>
+      <div class="metric"><span>🚙</span><div><small>Enyaq</small><strong>—</strong></div></div>
+      <div class="metric"><span>🏠</span><div><small>Maison</small><strong>OK</strong></div></div>
+    </div>
+  </article>
+  <nav class="quickbar">
+    <div class="quickbar-title">MES APPS</div>
+    <div class="quickbar-links">
+      <button data-companion="https://sergezehntner-ux.github.io/Herbier_gourmand/"><img src="icon-herbier.png" alt=""><span>Herbier</span></button>
+      <button data-companion="https://sergezehntner-ux.github.io/ma_sante/"><img src="icon-sante.png" alt=""><span>Ma Santé</span></button>
+      <button data-companion="https://sergezehntner-ux.github.io/Djinn/"><img src="icon-djinn.png" alt=""><span>Djinn</span></button>
+    </div>
+  </nav>
+</div>
 </main>
 <script src="compat-v026b.js"></script><script src="app.js"></script><script src="enyaq.js"></script><script src="libre.js"></script>
 <script>document.querySelector('.version').textContent='v0.2.6 · Connexions';</script>

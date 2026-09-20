@@ -1,0 +1,116 @@
+/* Ma Vie v0.2.6e — zone permanente en bas : Pour moi + Mes apps */
+.permanent-dock{
+  position:fixed;
+  z-index:20;
+  left:50%;
+  bottom:max(8px,env(safe-area-inset-bottom));
+  width:min(calc(100% - 40px),1060px);
+  transform:translateX(-50%);
+  display:grid;
+  gap:7px;
+}
+.permanent-dock .personal-card,
+.permanent-dock .quickbar{
+  position:static!important;
+  inset:auto!important;
+  width:auto!important;
+  transform:none!important;
+  margin:0!important;
+  min-height:0!important;
+}
+.permanent-dock .personal-card{
+  display:grid;
+  grid-template-columns:112px minmax(0,1fr);
+  align-items:center;
+  gap:10px;
+  padding:7px 12px;
+}
+.permanent-dock .personal-card>.card-title{
+  margin:0;
+  white-space:nowrap;
+}
+.permanent-dock .metrics{
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  gap:7px;
+}
+.permanent-dock .metric{
+  min-height:0!important;
+  padding:5px 10px!important;
+}
+.permanent-dock .metric>div{min-width:0}
+.permanent-dock .metric strong{
+  white-space:normal!important;
+  overflow-wrap:anywhere;
+}
+.permanent-dock .quickbar{
+  display:grid!important;
+  grid-template-columns:112px minmax(0,1fr)!important;
+  align-items:center;
+  gap:10px;
+  padding:6px 12px!important;
+}
+.quickbar-title{
+  text-transform:uppercase;
+  font-size:.73rem;
+  font-weight:800;
+  letter-spacing:.08em;
+  white-space:nowrap;
+}
+.quickbar-links{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  align-items:center;
+}
+.quickbar-links button{
+  display:flex;
+  flex-direction:row;
+  justify-content:center;
+  align-items:center;
+  gap:7px;
+}
+.quickbar-links button img{
+  width:30px;height:30px;
+}
+.quickbar-links button span{font-size:.72rem}
+.app-shell{padding-bottom:178px!important}
+
+/* Le contenu journalier reste totalement indépendant du dock permanent. */
+.grid .guide-card{grid-column:1 / -1;min-height:0!important;height:auto}
+
+/* Fold fermé : même séparation, mais dock très compact. */
+@media(max-width:699px){
+  .permanent-dock{
+    width:calc(100% - 18px);
+    bottom:max(4px,env(safe-area-inset-bottom));
+    gap:4px;
+  }
+  .permanent-dock .personal-card{
+    grid-template-columns:72px minmax(0,1fr);
+    gap:5px;
+    padding:5px 7px;
+  }
+  .permanent-dock .personal-card>.card-title{
+    font-size:.60rem;
+  }
+  .permanent-dock .metrics{
+    grid-template-columns:repeat(3,minmax(0,1fr))!important;
+    gap:4px;
+  }
+  .permanent-dock .metric{
+    padding:4px 5px!important;
+    gap:4px;
+  }
+  .permanent-dock .metric>span:first-child{font-size:.95rem}
+  .permanent-dock .metric small{font-size:.55rem}
+  .permanent-dock .metric strong{font-size:.65rem}
+  .permanent-dock .quickbar{
+    grid-template-columns:72px minmax(0,1fr)!important;
+    gap:5px;
+    padding:4px 7px!important;
+  }
+  .quickbar-title{font-size:.60rem}
+  .quickbar-links button{gap:4px}
+  .quickbar-links button img{width:25px;height:25px}
+  .quickbar-links button span{font-size:.58rem}
+  .app-shell{padding-bottom:145px!important}
+}
