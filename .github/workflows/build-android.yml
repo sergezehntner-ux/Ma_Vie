@@ -65,8 +65,8 @@ jobs:
                   applicationId = "ch.sergezehntner.mavie"
                   minSdk = 26
                   targetSdk = 35
-                  versionCode = 204
-                  versionName = "0.2.4"
+                  versionCode = 205
+                  versionName = "0.2.5"
               }
               signingConfigs {
                   create("release") {
@@ -382,6 +382,7 @@ jobs:
           import android.webkit.WebResourceRequest
           import android.webkit.WebView
           import android.webkit.WebViewClient
+          import android.webkit.WebSettings
           import androidx.activity.result.contract.ActivityResultContracts
           import androidx.appcompat.app.AppCompatActivity
           import androidx.core.content.ContextCompat
@@ -404,6 +405,8 @@ jobs:
                   webView=findViewById(R.id.webView)
                   webView.settings.javaScriptEnabled=true
                   webView.settings.domStorageEnabled=true
+                  webView.settings.cacheMode=WebSettings.LOAD_NO_CACHE
+                  webView.clearCache(true)
                   webView.addJavascriptInterface(CalendarBridge(this),"MaVieAndroid")
                   webView.addJavascriptInterface(EnyaqBridge(this, this),"MaVieEnyaq")
                   webView.webViewClient=object:WebViewClient(){
@@ -418,7 +421,7 @@ jobs:
                   if(ContextCompat.checkSelfPermission(this,Manifest.permission.ACCESS_COARSE_LOCATION)!=PackageManager.PERMISSION_GRANTED) missing.add(Manifest.permission.ACCESS_COARSE_LOCATION)
                   if(ContextCompat.checkSelfPermission(this,Manifest.permission.ACCESS_FINE_LOCATION)!=PackageManager.PERMISSION_GRANTED) missing.add(Manifest.permission.ACCESS_FINE_LOCATION)
                   if(missing.isNotEmpty()) askPermissions.launch(missing.toTypedArray())
-                  webView.loadUrl(startUrl)
+                  webView.loadUrl(startUrl + "?app=0.2.5")
               }
           }
           EOF
@@ -440,5 +443,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Ma_Vie_Android_v0.2.4
+          name: Ma_Vie_Android_v0.2.5
           path: android/app/build/outputs/apk/release/app-release.apk
