@@ -1,0 +1,10 @@
+/* Ma Vie v0.2.6 — rendez-vous DEMAIN : retour à la ligne sans troncature */
+.tomorrow-card .timed-tomorrow strong{
+  white-space:normal!important;
+  overflow-wrap:anywhere;
+  word-break:normal;
+}
+.tomorrow-card .timed-tomorrow small{
+  white-space:normal!important;
+  overflow-wrap:anywhere;
+}
