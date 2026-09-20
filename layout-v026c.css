@@ -1,0 +1,33 @@
+/* Ma Vie v0.2.6c — météo de demain dans l'en-tête + 3 tuiles Pour moi */
+.tomorrow-heading{
+  display:grid!important;
+  grid-template-columns:1fr auto 1fr;
+  align-items:center;
+}
+.tomorrow-heading>span:first-child{justify-self:start}
+.tomorrow-heading .tomorrow-weather-head{
+  justify-self:center;
+  text-transform:none;
+  letter-spacing:0;
+  font-size:.70rem;
+  font-weight:750;
+  white-space:nowrap;
+}
+.tomorrow-heading .source{justify-self:end}
+.personal-card .metrics{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+
+/* Le titre du rendez-vous de demain peut enfin revenir à la ligne. */
+.tomorrow-card .timed-tomorrow .appointment-main strong{
+  white-space:normal!important;
+  overflow-wrap:anywhere!important;
+  overflow:visible!important;
+  text-overflow:clip!important;
+}
+.tomorrow-card .timed-tomorrow .appointment-main small{
+  white-space:normal!important;
+  overflow-wrap:anywhere!important;
+}
+@media(max-width:699px){
+  .tomorrow-heading .tomorrow-weather-head{font-size:.64rem}
+  .personal-card .metrics{grid-template-columns:1fr!important}
+}
