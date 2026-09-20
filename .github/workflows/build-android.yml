@@ -65,8 +65,8 @@ jobs:
                   applicationId = "ch.sergezehntner.mavie"
                   minSdk = 26
                   targetSdk = 35
-                  versionCode = 207
-                  versionName = "0.2.7"
+                  versionCode = 208
+                  versionName = "0.2.8"
               }
               signingConfigs {
                   create("release") {
@@ -428,7 +428,6 @@ jobs:
                   super.onCreate(savedInstanceState);setContentView(R.layout.activity_main);webView=findViewById(R.id.webView)
                   webView.settings.javaScriptEnabled=true;webView.settings.domStorageEnabled=true
                   webView.settings.cacheMode=WebSettings.LOAD_NO_CACHE
-                  webView.settings.setAppCacheEnabled(false)
                   webView.clearCache(true);webView.clearHistory()
                   android.webkit.CookieManager.getInstance().flush()
                   webView.addJavascriptInterface(CalendarBridge(this),"MaVieAndroid")
@@ -446,7 +445,7 @@ jobs:
                   if(missing.isNotEmpty())askPermissions.launch(missing.toTypedArray())
                   val nonce=System.currentTimeMillis()
                   val headers=mapOf("Cache-Control" to "no-cache, no-store, max-age=0","Pragma" to "no-cache")
-                  webView.loadUrl(startUrl+"?app=0.2.7&t="+nonce,headers)
+                  webView.loadUrl(startUrl+"?app=0.2.8&t="+nonce,headers)
               }
           }
           EOF
@@ -468,5 +467,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Ma_Vie_Android_v0.2.7
+          name: Ma_Vie_Android_v0.2.8
           path: android/app/build/outputs/apk/release/app-release.apk
