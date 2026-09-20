@@ -69,8 +69,8 @@ jobs:
                   applicationId = "ch.sergezehntner.mavie"
                   minSdk = 26
                   targetSdk = 35
-                  versionCode = 33
-                  versionName = "0.1.033"
+                  versionCode = 37
+                  versionName = "0.1.037"
               }
               signingConfigs {
                   create("release") {
@@ -159,6 +159,19 @@ jobs:
                       put("accuracy", best.accuracy)
                       put("time", best.time)
                   }.toString()
+              }
+
+              @JavascriptInterface
+              fun openCalendarDay(timeMillis: Long) {
+                  val uri = android.provider.CalendarContract.CONTENT_URI.buildUpon()
+                      .appendPath("time")
+                      .appendPath(timeMillis.toString())
+                      .build()
+                  val intent = android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+                      data = uri
+                      addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                  }
+                  try { context.startActivity(intent) } catch (_: Exception) { }
               }
 
               @JavascriptInterface
@@ -256,5 +269,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Ma_Vie_Android_v0.1.033
+          name: Ma_Vie_Android_v0.1.037
           path: android/app/build/outputs/apk/release/app-release.apk
