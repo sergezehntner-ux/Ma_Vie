@@ -65,8 +65,8 @@ jobs:
                   applicationId = "ch.sergezehntner.mavie"
                   minSdk = 26
                   targetSdk = 35
-                  versionCode = 206
-                  versionName = "0.2.6"
+                  versionCode = 207
+                  versionName = "0.2.7"
               }
               signingConfigs {
                   create("release") {
@@ -420,13 +420,17 @@ jobs:
           class MainActivity:AppCompatActivity(){
               private lateinit var webView:WebView
               private val host="sergezehntner-ux.github.io"
-              private val startUrl="https://sergezehntner-ux.github.io/Ma_Vie/"
+              private val startUrl="https://sergezehntner-ux.github.io/Ma_Vie/index.html"
               private val askPermissions=registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()){webView.reload()}
               fun refreshEnyaq(){runOnUiThread{webView.evaluateJavascript("window.maVieRefreshEnyaq&&window.maVieRefreshEnyaq()",null)}}
               fun refreshLibre(){runOnUiThread{webView.evaluateJavascript("window.maVieRefreshLibre&&window.maVieRefreshLibre()",null)}}
               override fun onCreate(savedInstanceState:Bundle?){
                   super.onCreate(savedInstanceState);setContentView(R.layout.activity_main);webView=findViewById(R.id.webView)
-                  webView.settings.javaScriptEnabled=true;webView.settings.domStorageEnabled=true;webView.settings.cacheMode=WebSettings.LOAD_NO_CACHE;webView.clearCache(true)
+                  webView.settings.javaScriptEnabled=true;webView.settings.domStorageEnabled=true
+                  webView.settings.cacheMode=WebSettings.LOAD_NO_CACHE
+                  webView.settings.setAppCacheEnabled(false)
+                  webView.clearCache(true);webView.clearHistory()
+                  android.webkit.CookieManager.getInstance().flush()
                   webView.addJavascriptInterface(CalendarBridge(this),"MaVieAndroid")
                   webView.addJavascriptInterface(EnyaqBridge(this,this),"MaVieEnyaq")
                   webView.addJavascriptInterface(LibreBridge(this,this),"MaVieLibre")
@@ -440,7 +444,9 @@ jobs:
                   if(ContextCompat.checkSelfPermission(this,Manifest.permission.ACCESS_COARSE_LOCATION)!=PackageManager.PERMISSION_GRANTED)missing.add(Manifest.permission.ACCESS_COARSE_LOCATION)
                   if(ContextCompat.checkSelfPermission(this,Manifest.permission.ACCESS_FINE_LOCATION)!=PackageManager.PERMISSION_GRANTED)missing.add(Manifest.permission.ACCESS_FINE_LOCATION)
                   if(missing.isNotEmpty())askPermissions.launch(missing.toTypedArray())
-                  webView.loadUrl(startUrl+"?app=0.2.6")
+                  val nonce=System.currentTimeMillis()
+                  val headers=mapOf("Cache-Control" to "no-cache, no-store, max-age=0","Pragma" to "no-cache")
+                  webView.loadUrl(startUrl+"?app=0.2.7&t="+nonce,headers)
               }
           }
           EOF
@@ -462,5 +468,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Ma_Vie_Android_v0.2.6
+          name: Ma_Vie_Android_v0.2.7
           path: android/app/build/outputs/apk/release/app-release.apk
