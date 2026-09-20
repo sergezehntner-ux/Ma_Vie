@@ -69,8 +69,8 @@ jobs:
                   applicationId = "ch.sergezehntner.mavie"
                   minSdk = 26
                   targetSdk = 35
-                  versionCode = 201
-                  versionName = "0.2.1"
+                  versionCode = 202
+                  versionName = "0.2.2"
               }
               signingConfigs {
                   create("release") {
@@ -162,15 +162,15 @@ jobs:
               }
 
               @JavascriptInterface
-              fun openUrl(url: String) {
+              fun openCompanion(url: String) {
                   try {
                       val uri = android.net.Uri.parse(url)
-                      if (uri.scheme == "https" || uri.scheme == "http") {
-                          val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, uri).apply {
-                              addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
-                          }
-                          context.startActivity(intent)
+                      if (uri.scheme != "https") return
+                      val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, uri).apply {
+                          addCategory(android.content.Intent.CATEGORY_BROWSABLE)
+                          addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
                       }
+                      context.startActivity(intent)
                   } catch (_: Exception) { }
               }
 
@@ -282,5 +282,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Ma_Vie_Android_v0.2.1
+          name: Ma_Vie_Android_v0.2.2
           path: android/app/build/outputs/apk/release/app-release.apk
