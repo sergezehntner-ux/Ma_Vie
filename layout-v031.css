@@ -1,0 +1,56 @@
+/* Ma Vie v0.3.1 — socle fusionné + densité dynamique */
+.permanent-dock{
+  gap:0!important;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.68);
+  border-radius:15px;
+  background:rgba(250,253,252,.38);
+  backdrop-filter:blur(10px) saturate(1.08);
+  -webkit-backdrop-filter:blur(10px) saturate(1.08);
+  box-shadow:0 4px 18px #073c4a18;
+}
+.permanent-dock .personal-card,
+.permanent-dock .quickbar{
+  background:transparent!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  backdrop-filter:none!important;
+  -webkit-backdrop-filter:none!important;
+}
+.permanent-dock .personal-card{
+  padding:4px 11px!important;
+}
+.permanent-dock .quickbar{
+  border-top:1px solid rgba(255,255,255,.55)!important;
+  padding:3px 11px!important;
+}
+.permanent-dock .metric{
+  padding:3px 8px!important;
+}
+.permanent-dock .quickbar-links button img{width:27px;height:27px}
+.app-shell{padding-bottom:126px!important}
+
+/* Densité choisie automatiquement par density-v031.js */
+.app-shell{--mv-gap:9px;--mv-pad-y:10px;--mv-title-gap:7px;--mv-appt-bottom:7px}
+.grid{gap:var(--mv-gap)!important}
+.grid>.card{padding-top:var(--mv-pad-y)!important;padding-bottom:var(--mv-pad-y)!important}
+.grid>.card>.card-title{margin-bottom:var(--mv-title-gap)!important}
+.now-card .appointment,.tomorrow-card .appointment{padding-bottom:var(--mv-appt-bottom)!important}
+
+body.mv-density-comfort .app-shell{--mv-gap:11px;--mv-pad-y:12px;--mv-title-gap:9px;--mv-appt-bottom:9px}
+body.mv-density-compact .app-shell{--mv-gap:6px;--mv-pad-y:7px;--mv-title-gap:5px;--mv-appt-bottom:5px}
+body.mv-density-tight .app-shell{--mv-gap:3px;--mv-pad-y:5px;--mv-title-gap:3px;--mv-appt-bottom:2px}
+
+@media(max-width:699px){
+ .permanent-dock{border-radius:12px}
+ .permanent-dock .personal-card{padding:3px 6px!important}
+ .permanent-dock .quickbar{padding:2px 6px!important}
+ .permanent-dock .metric{padding:2px 4px!important}
+ .permanent-dock .quickbar-links button img{width:23px;height:23px}
+ .app-shell{padding-bottom:106px!important}
+ body.mv-density-comfort .app-shell{--mv-gap:7px;--mv-pad-y:9px;--mv-title-gap:6px;--mv-appt-bottom:6px}
+ body.mv-density-normal .app-shell{--mv-gap:5px;--mv-pad-y:7px;--mv-title-gap:5px;--mv-appt-bottom:4px}
+ body.mv-density-compact .app-shell{--mv-gap:3px;--mv-pad-y:5px;--mv-title-gap:3px;--mv-appt-bottom:2px}
+ body.mv-density-tight .app-shell{--mv-gap:2px;--mv-pad-y:4px;--mv-title-gap:2px;--mv-appt-bottom:1px}
+}
