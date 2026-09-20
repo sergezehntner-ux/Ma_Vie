@@ -4,10 +4,10 @@ const dlg=$('#dialog');
 document.querySelectorAll('[data-companion]').forEach(b=>{
  b.addEventListener('click',()=>{
   const url=b.dataset.companion;
-  if(window.MaVieAndroid&&typeof window.MaVieAndroid.openUrl==='function'){
-   try{window.MaVieAndroid.openUrl(url);return}catch(e){console.warn(e)}
+  if(window.MaVieAndroid&&typeof window.MaVieAndroid.openCompanion==='function'){
+   try{window.MaVieAndroid.openCompanion(url);return}catch(e){console.warn(e)}
   }
-  window.location.href=url;
+  window.open(url,'_blank');
  });
 });
 
@@ -22,8 +22,8 @@ $('#demoPeriod').onchange=e=>ambience($('#demoWeather').value,e.target.value);
 $('#autoAmbience').onclick=()=>ambience($('#demoWeather').value,period(new Date().getHours()));
 const n=new Date(),lab=new Intl.DateTimeFormat('fr-CH',{weekday:'short',day:'numeric',month:'short'}).format(n);
 $('#todayLabel').textContent=lab.charAt(0).toUpperCase()+lab.slice(1);ambience('sun',period(n.getHours()));
-document.querySelector('.version').textContent='v0.2.1 · Connexions';
-document.querySelector('.demo-panel summary').textContent='Démo v0.2.1';
+document.querySelector('.version').textContent='v0.2.2 · Connexions';
+document.querySelector('.demo-panel summary').textContent='Démo v0.2.2';
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
 
 function wmo(c){c=+c;if(c===0)return'sun';if([1,2,3].includes(c))return'cloud';if([45,48].includes(c))return'fog';if([71,73,75,77,85,86].includes(c))return'snow';if([95,96,99].includes(c))return'storm';if([51,53,55,56,57,61,63,65,66,67,80,81,82].includes(c))return'rain';return'cloud'}
