@@ -1,0 +1,7 @@
+/* Ma Vie v0.3.3 — corrections terrain */
+.personal-title{display:flex!important;align-items:center;gap:5px}
+.refresh-personal{appearance:none;border:0;background:transparent;color:inherit;padding:0 2px;margin:0;font:inherit;font-size:1rem;font-weight:800;line-height:1;cursor:pointer;opacity:.82}
+.refresh-personal:active{transform:scale(.92)}
+.refresh-personal.is-refreshing{animation:mv-refresh-spin .45s linear}
+@keyframes mv-refresh-spin{to{transform:rotate(360deg)}}
+.permanent-dock .metrics{grid-template-columns:repeat(2,minmax(0,1fr))!important}
