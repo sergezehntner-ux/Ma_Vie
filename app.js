@@ -85,8 +85,11 @@ function tomorrowHtml(e){
 }
 function renderAgenda(ev,real){
  let s=state(ev),ta=$('#todayAppointments'),te=$('#todayEmpty'),tl=$('#tomorrowAppointments'),tme=$('#tomorrowEmpty');
- if(s.today.length){ta.innerHTML=s.today.map(e=>e.allDay?allDayHtml(e):timedTodayHtml(e)).join('');ta.classList.remove('hidden');te.classList.add('hidden')}else{ta.innerHTML='';ta.classList.add('hidden');te.classList.remove('hidden')}
- if(s.tomorrow.length){tl.innerHTML=s.tomorrow.map(tomorrowHtml).join('');tl.classList.remove('hidden');tme.classList.add('hidden')}else{tl.innerHTML='';tl.classList.add('hidden');tme.classList.remove('hidden')}
+ const todayTimed=s.today.some(e=>!e.allDay), tomorrowTimed=s.tomorrow.some(e=>!e.allDay);
+ if(s.today.length){ta.innerHTML=s.today.map(e=>e.allDay?allDayHtml(e):timedTodayHtml(e)).join('');ta.classList.remove('hidden')}else{ta.innerHTML='';ta.classList.add('hidden')}
+ te.textContent="Plus de rendez-vous prévu aujourd'hui."; te.classList.toggle('hidden',todayTimed);
+ if(s.tomorrow.length){tl.innerHTML=s.tomorrow.map(tomorrowHtml).join('');tl.classList.remove('hidden')}else{tl.innerHTML='';tl.classList.add('hidden')}
+ tme.textContent="Aucun rendez-vous prévu pour ce jour."; tme.classList.toggle('hidden',tomorrowTimed);
  document.documentElement.dataset.agendaSource=real?'android':'demo';
  // Tant que les propositions intelligentes ne sont pas calculées à partir de vrais lieux,
  // ne jamais afficher les exemples géographiques de la maquette avec un agenda Android réel.
