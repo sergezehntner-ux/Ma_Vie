@@ -15,7 +15,7 @@
  function weather(){const w=document.body.dataset.weather||'sun';return {w,bad:['rain','storm','snow','fog'].includes(w),label:{rain:'pluie',storm:'orage',snow:'neige',fog:'brouillard',cloud:'nuageux',sun:'beau temps'}[w]||''}}
  function nextTimed(day){const now=new Date();return events().filter(e=>!e.allDay&&key(e.start)===key(day)&&(key(day)!==key(now)||e.start>now)).sort((a,b)=>a.start-b.start)[0]||null}
  function suggestedMinutes(day){const now=new Date(),isToday=key(day)===key(now),n=nextTimed(day);if(!isToday)return n?Math.max(30,Math.min(180,Math.floor((n.start-new Date(day.getFullYear(),day.getMonth(),day.getDate(),9))/60000))):120;if(!n)return 120;return Math.max(15,Math.min(180,Math.floor((n.start-now)/60000)-30))}
- function classify(e){const t=(e.title+' '+e.calendar).toLowerCase();if(/anniversaire|birthday|geburtstag/.test(t)||/\b\d{1,3}\s*$/.test(e.title))return {icon:'🎂',kind:'anniversaire',activity:'Indifférent'};if(/jour férié|ferie|holiday|jeûne fédéral|jeune federal/.test(t))return {icon:'🇨🇭',kind:'jour férié',activity:'Indifférent'};if(/mariage|wedding/.test(t))return {icon:'💍',kind:'événement',activity:'Indifférent'};return {icon:'•',kind:'événement',activity:'Indifférent'}}
+ function classify(e){const t=(e.title+' '+e.calendar).toLowerCase();if(/anniversaire|birthday|geburtstag/.test(t)||/\b\d{1,3}\s*$/.test(e.title))return {icon:'🎂',kind:'anniversaire',family:'date-importante',activity:'Indifférent'};if(/mariage|wedding|hochzeit/.test(t))return {icon:'💍',kind:'mariage',family:'date-importante',activity:'Indifférent'};if(/décès|deces|death|todestag/.test(t))return {icon:'🕯️',kind:'décès',family:'date-importante',activity:'Indifférent'};if(/jubilé|jubile|jubilee|jubiläum/.test(t))return {icon:'★',kind:'jubilé',family:'date-importante',activity:'Indifférent'};if(/jour férié|ferie|holiday|jeûne fédéral|jeune federal/.test(t))return {icon:'🇨🇭',kind:'jour férié',family:'événement',activity:'Indifférent'};return {icon:'•',kind:'événement',family:'événement',activity:'Indifférent'}}
  function ensureDialog(){
   if(document.querySelector('#proposalDialog'))return;
   const d=document.createElement('dialog');d.id='proposalDialog';d.className='proposal-dialog';
@@ -46,7 +46,8 @@
  }
  function dayStamp(d){return new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime()}
  function spanInfo(e,day){const one=86400000,start=dayStamp(e.start),end=dayStamp(e.end),cur=dayStamp(day),total=Math.max(1,Math.round((end-start)/one));if(total<=1)return null;const n=Math.floor((cur-start)/one)+1;return n>=1&&n<=total?{n,total}:null}
- function dayEvents(day){const d=dayStamp(day);return events().filter(e=>e.allDay&&d>=dayStamp(e.start)&&d<dayStamp(e.end))}
+ function dayEvents(day){const d=dayStamp(day);return events().filter(e=>e.allDay&&d>=dayStamp(e.start)&&d<dayStamp(e.end)).sort((a,b)=>eventRank(a)-eventRank(b))}
+ function eventRank(e){if(spanInfo(e,e.start))return 0;return classify(e).family==='date-importante'?2:1}
  function eventDisplayTitle(e,day){const sp=spanInfo(e,day);return sp&&!/\(jour\s+\d+\s*\/\s*\d+\)/i.test(e.title)?`${e.title} (jour ${sp.n}/${sp.total})`:e.title}
  function eventHtml(e,day){const c=classify(e),title=eventDisplayTitle(e,day);return `<div class="mv-info"><span class="mv-info-icon">${c.icon}</span><div class="mv-info-text"><strong>${esc(title)}</strong>${e.place?`<small>${esc(e.place)}</small>`:''}</div><button class="mv-idea" type="button">Une idée&nbsp;?</button></div>`}
  function renderAgendaMessages(){
