@@ -101,6 +101,8 @@ function installAgendaEndLayout(){
  .timed-agenda>.appointment-end{grid-column:3;grid-row:1;color:inherit!important;font-weight:400!important;font-size:.74rem!important;line-height:1.22!important;white-space:nowrap;text-align:right}
  .timed-agenda>.appointment-pin{grid-column:4!important;grid-row:1!important;justify-self:end!important;align-self:start!important;margin:0!important;line-height:1.22!important}
  .timed-agenda>.appointment-place{grid-column:2 / 4;grid-row:2;display:block;min-width:0;font-size:.66rem;line-height:1.2;opacity:.8}
+ .now-card .appointment.timed-agenda,.tomorrow-card .appointment.timed-agenda{row-gap:0!important;padding-top:4px!important;padding-bottom:4px!important}
+ .timed-agenda>.appointment-place{margin:1px 0 0!important;padding:0!important}
  @media(max-width:699px){.now-card .appointment.timed-agenda,.tomorrow-card .appointment.timed-agenda{grid-template-columns:44px minmax(0,1fr) auto auto!important;column-gap:6px!important}.timed-agenda>time,.timed-agenda>.appointment-title,.timed-agenda>.appointment-end{font-size:.70rem!important}}
  `;document.head.appendChild(st);
 }
