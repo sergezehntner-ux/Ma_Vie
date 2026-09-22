@@ -77,10 +77,10 @@ function displayAgendaTitle(e){
 function allDayHtml(e){
  return `<div class="appointment all-day compact-row"><time>${kind(e)}</time><div><strong>${esc(displayAgendaTitle(e))}</strong>${e.place?`<small>${esc(e.place)}</small>`:''}</div></div>`
 }
-function timedTodayHtml(e){return `<div class="appointment timed-agenda compact-row"><time>${hm(e.start)}</time><div class="appointment-main"><strong>${esc(e.title)}</strong>${e.place?`<small>${esc(e.place)}</small>`:''}</div><span class="appointment-end">jusqu’à ${hm(e.end)}</span></div>`}
+function timedTodayHtml(e){return `<div class="appointment timed-agenda compact-row"><time>${hm(e.start)}</time><strong class="appointment-title">${esc(e.title)}</strong><span class="appointment-end">jusqu’à ${hm(e.end)}</span>${e.place?'<span class="appointment-pin" aria-hidden="true">📍</span>':''}${e.place?`<small class="appointment-place">${esc(e.place)}</small>`:''}</div>`}
 function tomorrowHtml(e){
  if(e.allDay)return allDayHtml(e);
- return `<div class="appointment timed-tomorrow timed-agenda compact-row"><time>${hm(e.start)}</time><div class="appointment-main"><strong>${esc(e.title)}</strong>${e.place?`<small>${esc(e.place)}</small>`:''}</div><span class="appointment-end">jusqu’à ${hm(e.end)}</span>${e.place?'<span class="appointment-pin" aria-hidden="true">📍</span>':''}</div>`
+ return `<div class="appointment timed-tomorrow timed-agenda compact-row"><time>${hm(e.start)}</time><strong class="appointment-title">${esc(e.title)}</strong><span class="appointment-end">jusqu’à ${hm(e.end)}</span>${e.place?'<span class="appointment-pin" aria-hidden="true">📍</span>':''}${e.place?`<small class="appointment-place">${esc(e.place)}</small>`:''}</div>`
 }
 function renderAgenda(ev,real){
  let s=state(ev),ta=$('#todayAppointments'),te=$('#todayEmpty'),tl=$('#tomorrowAppointments'),tme=$('#tomorrowEmpty');
@@ -95,12 +95,13 @@ function renderAgenda(ev,real){
 function installAgendaEndLayout(){
  if(document.querySelector('#mv-agenda-end-layout'))return;
  const st=document.createElement('style');st.id='mv-agenda-end-layout';st.textContent=`
- .now-card .appointment.timed-agenda,.tomorrow-card .appointment.timed-agenda{display:grid!important;grid-template-columns:48px minmax(0,1fr) auto!important;column-gap:8px!important;align-items:start!important}
- .timed-agenda>time{grid-column:1;grid-row:1}
- .timed-agenda>.appointment-main{grid-column:2;grid-row:1 / span 2;min-width:0}
- .timed-agenda>.appointment-end{grid-column:3;grid-row:1;color:var(--muted);font-weight:400;font-size:.76rem;line-height:1.22;white-space:nowrap;text-align:right}
- .timed-agenda>.appointment-pin{grid-column:3!important;grid-row:2!important;justify-self:end!important;align-self:start!important;margin-top:2px}
- @media(max-width:699px){.now-card .appointment.timed-agenda,.tomorrow-card .appointment.timed-agenda{grid-template-columns:44px minmax(0,1fr) auto!important;column-gap:6px!important}.timed-agenda>.appointment-end{font-size:.72rem}}
+ .now-card .appointment.timed-agenda,.tomorrow-card .appointment.timed-agenda{display:grid!important;grid-template-columns:48px minmax(0,1fr) auto auto!important;column-gap:8px!important;align-items:start!important}
+ .timed-agenda>time{grid-column:1;grid-row:1;font-weight:400!important;font-size:.74rem!important;line-height:1.22!important;color:inherit!important}
+ .timed-agenda>.appointment-title{grid-column:2;grid-row:1;min-width:0;font-size:.74rem!important;line-height:1.22!important}
+ .timed-agenda>.appointment-end{grid-column:3;grid-row:1;color:inherit!important;font-weight:400!important;font-size:.74rem!important;line-height:1.22!important;white-space:nowrap;text-align:right}
+ .timed-agenda>.appointment-pin{grid-column:4!important;grid-row:1!important;justify-self:end!important;align-self:start!important;margin:0!important;line-height:1.22!important}
+ .timed-agenda>.appointment-place{grid-column:2 / 4;grid-row:2;display:block;min-width:0;font-size:.66rem;line-height:1.2;opacity:.8}
+ @media(max-width:699px){.now-card .appointment.timed-agenda,.tomorrow-card .appointment.timed-agenda{grid-template-columns:44px minmax(0,1fr) auto auto!important;column-gap:6px!important}.timed-agenda>time,.timed-agenda>.appointment-title,.timed-agenda>.appointment-end{font-size:.70rem!important}}
  `;document.head.appendChild(st);
 }
 installAgendaEndLayout();
