@@ -77,25 +77,33 @@ function displayAgendaTitle(e){
 function allDayHtml(e){
  return `<div class="appointment all-day compact-row"><time>${kind(e)}</time><div><strong>${esc(displayAgendaTitle(e))}</strong>${e.place?`<small>${esc(e.place)}</small>`:''}</div></div>`
 }
-function timedTodayHtml(e){return `<div class="appointment compact-row"><time>${hm(e.start)}</time><div><strong>${esc(e.title)}</strong>${e.place?`<small>${esc(e.place)}</small>`:''}</div></div>`}
+function timedTodayHtml(e){return `<div class="appointment timed-agenda compact-row"><time>${hm(e.start)}</time><div class="appointment-main"><strong>${esc(e.title)}</strong>${e.place?`<small>${esc(e.place)}</small>`:''}</div><span class="appointment-end">jusqu’à ${hm(e.end)}</span></div>`}
 function tomorrowHtml(e){
  if(e.allDay)return allDayHtml(e);
- let extra=[e.place,`jusqu’à ${hm(e.end)}`].filter(Boolean).join(' · ');
- return `<div class="appointment timed-tomorrow compact-row"><time>${hm(e.start)}</time><div class="appointment-main"><strong>${esc(e.title)}</strong>${extra?`<small>${esc(extra)}</small>`:''}</div>${e.place?'<span class="appointment-pin" aria-hidden="true">📍</span>':''}</div>`
+ return `<div class="appointment timed-tomorrow timed-agenda compact-row"><time>${hm(e.start)}</time><div class="appointment-main"><strong>${esc(e.title)}</strong>${e.place?`<small>${esc(e.place)}</small>`:''}</div><span class="appointment-end">jusqu’à ${hm(e.end)}</span>${e.place?'<span class="appointment-pin" aria-hidden="true">📍</span>':''}</div>`
 }
 function renderAgenda(ev,real){
  let s=state(ev),ta=$('#todayAppointments'),te=$('#todayEmpty'),tl=$('#tomorrowAppointments'),tme=$('#tomorrowEmpty');
- const todayTimed=s.today.some(e=>!e.allDay), tomorrowTimed=s.tomorrow.some(e=>!e.allDay);
- if(s.today.length){ta.innerHTML=s.today.map(e=>e.allDay?allDayHtml(e):timedTodayHtml(e)).join('');ta.classList.remove('hidden')}else{ta.innerHTML='';ta.classList.add('hidden')}
- te.textContent="Plus de rendez-vous prévu aujourd'hui."; te.classList.add("agenda-empty-message"); te.classList.toggle('hidden',todayTimed);
- if(s.tomorrow.length){tl.innerHTML=s.tomorrow.map(tomorrowHtml).join('');tl.classList.remove('hidden')}else{tl.innerHTML='';tl.classList.add('hidden')}
- tme.textContent="Aucun rendez-vous prévu pour ce jour."; tme.classList.add("agenda-empty-message"); tme.classList.toggle('hidden',tomorrowTimed);
+ if(s.today.length){ta.innerHTML=s.today.map(e=>e.allDay?allDayHtml(e):timedTodayHtml(e)).join('');ta.classList.remove('hidden');te.classList.add('hidden')}else{ta.innerHTML='';ta.classList.add('hidden');te.classList.remove('hidden')}
+ if(s.tomorrow.length){tl.innerHTML=s.tomorrow.map(tomorrowHtml).join('');tl.classList.remove('hidden');tme.classList.add('hidden')}else{tl.innerHTML='';tl.classList.add('hidden');tme.classList.remove('hidden')}
  document.documentElement.dataset.agendaSource=real?'android':'demo';
  // Tant que les propositions intelligentes ne sont pas calculées à partir de vrais lieux,
  // ne jamais afficher les exemples géographiques de la maquette avec un agenda Android réel.
  const guide=document.querySelector('.guide-card');
  if(guide)guide.classList.toggle('hidden',real);
 }
+function installAgendaEndLayout(){
+ if(document.querySelector('#mv-agenda-end-layout'))return;
+ const st=document.createElement('style');st.id='mv-agenda-end-layout';st.textContent=`
+ .now-card .appointment.timed-agenda,.tomorrow-card .appointment.timed-agenda{display:grid!important;grid-template-columns:48px minmax(0,1fr) auto!important;column-gap:8px!important;align-items:start!important}
+ .timed-agenda>time{grid-column:1;grid-row:1}
+ .timed-agenda>.appointment-main{grid-column:2;grid-row:1 / span 2;min-width:0}
+ .timed-agenda>.appointment-end{grid-column:3;grid-row:1;color:var(--muted);font-weight:400;font-size:.76rem;line-height:1.22;white-space:nowrap;text-align:right}
+ .timed-agenda>.appointment-pin{grid-column:3!important;grid-row:2!important;justify-self:end!important;align-self:start!important;margin-top:2px}
+ @media(max-width:699px){.now-card .appointment.timed-agenda,.tomorrow-card .appointment.timed-agenda{grid-template-columns:44px minmax(0,1fr) auto!important;column-gap:6px!important}.timed-agenda>.appointment-end{font-size:.72rem}}
+ `;document.head.appendChild(st);
+}
+installAgendaEndLayout();
 function refreshAgenda(){let a=androidEvents();renderAgenda(a===null?demo():a,a!==null)}
 
 function openCalendarDay(offset){
