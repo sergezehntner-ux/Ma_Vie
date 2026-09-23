@@ -65,8 +65,8 @@ jobs:
                   applicationId = "ch.sergezehntner.mavie"
                   minSdk = 26
                   targetSdk = 35
-                  versionCode = 211
-                  versionName = "0.3.0.1"
+                  versionCode = 212
+                  versionName = "0.3.0.2"
               }
               signingConfigs {
                   create("release") {
@@ -170,7 +170,7 @@ jobs:
           cat > android/app/src/main/res/xml/ma_vie_widget_info.xml <<'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
-              android:minWidth="300dp" android:minHeight="300dp" android:targetCellWidth="6" android:targetCellHeight="6"
+              android:minWidth="300dp" android:minHeight="180dp" android:targetCellWidth="6" android:targetCellHeight="4"
               android:updatePeriodMillis="1800000" android:initialLayout="@layout/ma_vie_widget" android:resizeMode="horizontal|vertical"
               android:widgetCategory="home_screen" android:description="@string/widget_description"/>
           EOF
