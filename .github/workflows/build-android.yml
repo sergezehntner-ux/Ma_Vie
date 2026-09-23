@@ -102,13 +102,18 @@ jobs:
                   <package android:name="cz.skodaauto.myskoda"/>
               </queries>
               <application android:label="Ma Vie" android:icon="@drawable/ic_launcher" android:roundIcon="@drawable/ic_launcher" android:usesCleartextTraffic="false" android:theme="@style/Theme.MaVie">
-                  <receiver android:name=".MaVieWidget" android:exported="true"><intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/></intent-filter><meta-data android:name="android.appwidget.provider" android:resource="@xml/ma_vie_widget_info"/></receiver>
                   <activity android:name=".MainActivity" android:exported="true">
                       <intent-filter>
                           <action android:name="android.intent.action.MAIN"/>
                           <category android:name="android.intent.category.LAUNCHER"/>
                       </intent-filter>
                   </activity>
+                  <receiver android:name=".MaVieWidgetProvider" android:exported="true">
+                      <intent-filter>
+                          <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+                      </intent-filter>
+                      <meta-data android:name="android.appwidget.provider" android:resource="@xml/ma_vie_widget_info"/>
+                  </receiver>
               </application>
           </manifest>
           EOF
@@ -119,6 +124,59 @@ jobs:
               android:id="@+id/webView"
               android:layout_width="match_parent"
               android:layout_height="match_parent" />
+          EOF
+
+          cat > android/app/src/main/res/layout/ma_vie_widget.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:id="@+id/widget_root" android:layout_width="match_parent" android:layout_height="match_parent"
+              android:padding="8dp" android:background="@drawable/widget_frame">
+              <ImageView android:id="@+id/weather_background" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop"/>
+              <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:padding="8dp">
+                  <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                      <TextView android:id="@+id/widget_place" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Ursy" android:textColor="#FFFFFFFF" android:textSize="20sp" android:textStyle="bold"/>
+                      <TextView android:id="@+id/widget_temp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="--°" android:textColor="#FFFFFFFF" android:textSize="20sp" android:textStyle="bold"/>
+                  </LinearLayout>
+                  <Space android:layout_width="1dp" android:layout_height="0dp" android:layout_weight="1"/>
+                  <LinearLayout android:id="@+id/card_now" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="9dp" android:layout_marginBottom="5dp" android:background="@drawable/widget_card">
+                      <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="MAINTENANT" android:textColor="#FFFFFFFF" android:textSize="14sp" android:textStyle="bold"/>
+                      <TextView android:id="@+id/widget_now" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#FFFFFFFF" android:textSize="13sp" android:maxLines="5"/>
+                  </LinearLayout>
+                  <LinearLayout android:id="@+id/card_know" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="9dp" android:layout_marginBottom="5dp" android:background="@drawable/widget_card">
+                      <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="À SAVOIR" android:textColor="#FFFFFFFF" android:textSize="14sp" android:textStyle="bold"/>
+                      <TextView android:id="@+id/widget_know" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#FFFFFFFF" android:textSize="13sp" android:maxLines="4"/>
+                  </LinearLayout>
+                  <LinearLayout android:id="@+id/card_me" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:padding="9dp" android:background="@drawable/widget_card">
+                      <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="POUR MOI   " android:textColor="#FFFFFFFF" android:textSize="14sp" android:textStyle="bold"/>
+                      <TextView android:id="@+id/widget_glucose" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="🩸 Glycémie —" android:textColor="#FFFFFFFF" android:textSize="13sp"/>
+                      <TextView android:id="@+id/widget_enyaq" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="🚙 Enyaq —" android:textColor="#FFFFFFFF" android:textSize="13sp"/>
+                  </LinearLayout>
+              </LinearLayout>
+          </FrameLayout>
+          EOF
+
+          cat > android/app/src/main/res/drawable/widget_frame.xml <<'EOF'
+          <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+              <solid android:color="#12000000"/><stroke android:width="1dp" android:color="#AAFFFFFF"/><corners android:radius="20dp"/>
+          </shape>
+          EOF
+
+          cat > android/app/src/main/res/drawable/widget_card.xml <<'EOF'
+          <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+              <solid android:color="#990B1C22"/><stroke android:width="1dp" android:color="#55FFFFFF"/><corners android:radius="16dp"/>
+          </shape>
+          EOF
+
+          cat > android/app/src/main/res/xml/ma_vie_widget_info.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+              android:minWidth="300dp" android:minHeight="300dp" android:targetCellWidth="6" android:targetCellHeight="6"
+              android:updatePeriodMillis="1800000" android:initialLayout="@layout/ma_vie_widget" android:resizeMode="horizontal|vertical"
+              android:widgetCategory="home_screen" android:description="@string/widget_description"/>
+          EOF
+
+          cat > android/app/src/main/res/values/strings.xml <<'EOF'
+          <resources><string name="app_name">Ma Vie</string><string name="widget_description">Ma Vie — aperçu de ma journée</string></resources>
           EOF
 
           cat > android/app/src/main/res/values/styles.xml <<'EOF'
@@ -242,22 +300,22 @@ jobs:
           import java.net.HttpURLConnection
           import java.net.URL
 
-          class EnyaqBridge(private val context:Context,private val activity:Activity){
+          class EnyaqBridge(private val context:Context,private val activity:Activity?){
               private val prefs=context.getSharedPreferences("enyaq_private",Context.MODE_PRIVATE)
               private val box=SecretBox("MaVieEnyaqKey")
-              @JavascriptInterface fun configure(){ activity.runOnUiThread {
-                  val pad=(20*activity.resources.displayMetrics.density).toInt()
-                  val layout=LinearLayout(activity).apply{orientation=LinearLayout.VERTICAL;setPadding(pad,0,pad,0)}
-                  val vin=EditText(activity).apply{hint="VIN (17 caractères)";isSingleLine=true}
-                  val key=EditText(activity).apply{hint="Clé API MyŠkoda";isSingleLine=true;inputType=129}
+              @JavascriptInterface fun configure(){ val a=activity?:return; a.runOnUiThread {
+                  val pad=(20*a.resources.displayMetrics.density).toInt()
+                  val layout=LinearLayout(a).apply{orientation=LinearLayout.VERTICAL;setPadding(pad,0,pad,0)}
+                  val vin=EditText(a).apply{hint="VIN (17 caractères)";isSingleLine=true}
+                  val key=EditText(a).apply{hint="Clé API MyŠkoda";isSingleLine=true;inputType=129}
                   layout.addView(vin);layout.addView(key)
-                  val dlg=AlertDialog.Builder(activity).setTitle("Configurer Enyaq").setView(layout).setNegativeButton("Annuler",null).setPositiveButton("Enregistrer",null).create()
+                  val dlg=AlertDialog.Builder(a).setTitle("Configurer Enyaq").setView(layout).setNegativeButton("Annuler",null).setPositiveButton("Enregistrer",null).create()
                   dlg.setOnShowListener{dlg.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener{
                       val v=vin.text.toString().trim().uppercase();val k=key.text.toString().trim()
                       if(v.length!=17){vin.error="Le VIN doit contenir 17 caractères";return@setOnClickListener}
                       if(k.isBlank()){key.error="Clé API requise";return@setOnClickListener}
                       prefs.edit().putString("vin",box.enc(v)).putString("apiKey",box.enc(k)).apply();dlg.dismiss()
-                      (activity as? MainActivity)?.refreshEnyaq()
+                      (a as? MainActivity)?.refreshEnyaq()
                   }};dlg.show()
               }}
               @JavascriptInterface fun getData():String{
@@ -295,7 +353,7 @@ jobs:
           import java.util.Locale
           import java.util.TimeZone
 
-          class LibreBridge(private val context:Context,private val activity:Activity){
+          class LibreBridge(private val context:Context,private val activity:Activity?){
               private val prefs=context.getSharedPreferences("libre_private",Context.MODE_PRIVATE)
               private val box=SecretBox("MaVieLibreKey")
               private val headers=mapOf("Content-Type" to "application/json","Accept" to "application/json","product" to "llu.android","version" to "4.17.0","Cache-Control" to "no-cache")
@@ -305,19 +363,19 @@ jobs:
               private fun sha(s:String)=MessageDigest.getInstance("SHA-256").digest(s.toByteArray()).joinToString(""){"%02x".format(it)}
               private fun base()="https://api-${prefs.getString("region","de")}.libreview.io"
 
-              @JavascriptInterface fun configure(){activity.runOnUiThread{
-                  val pad=(20*activity.resources.displayMetrics.density).toInt()
-                  val layout=LinearLayout(activity).apply{orientation=LinearLayout.VERTICAL;setPadding(pad,0,pad,0)}
-                  val email=EditText(activity).apply{hint="E-mail LibreLinkUp";isSingleLine=true;inputType=InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS}
-                  val pass=EditText(activity).apply{hint="Mot de passe LibreLinkUp";isSingleLine=true;inputType=InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD}
+              @JavascriptInterface fun configure(){val a=activity?:return;a.runOnUiThread{
+                  val pad=(20*a.resources.displayMetrics.density).toInt()
+                  val layout=LinearLayout(a).apply{orientation=LinearLayout.VERTICAL;setPadding(pad,0,pad,0)}
+                  val email=EditText(a).apply{hint="E-mail LibreLinkUp";isSingleLine=true;inputType=InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS}
+                  val pass=EditText(a).apply{hint="Mot de passe LibreLinkUp";isSingleLine=true;inputType=InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD}
                   layout.addView(email);layout.addView(pass)
-                  val dlg=AlertDialog.Builder(activity).setTitle("Configurer LibreLinkUp").setMessage("Compte secondaire uniquement. Les identifiants restent chiffrés sur ce téléphone.")
+                  val dlg=AlertDialog.Builder(a).setTitle("Configurer LibreLinkUp").setMessage("Compte secondaire uniquement. Les identifiants restent chiffrés sur ce téléphone.")
                       .setView(layout).setNegativeButton("Annuler",null).setPositiveButton("Enregistrer",null).create()
                   dlg.setOnShowListener{dlg.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener{
                       val e=email.text.toString().trim();val p=pass.text.toString()
                       if(!e.contains("@")){email.error="Adresse e-mail requise";return@setOnClickListener}
                       if(p.isBlank()){pass.error="Mot de passe requis";return@setOnClickListener}
-                      put("email",e);put("password",p);clearSession();dlg.dismiss();(activity as? MainActivity)?.refreshLibre()
+                      put("email",e);put("password",p);clearSession();dlg.dismiss();(a as? MainActivity)?.refreshLibre()
                   }};dlg.show()
               }}
 
@@ -404,45 +462,108 @@ jobs:
           }
           EOF
 
-          cat > android/app/src/main/res/xml/ma_vie_widget_info.xml <<'EOF'
-          <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android" android:minWidth="320dp" android:minHeight="300dp" android:minResizeWidth="250dp" android:minResizeHeight="220dp" android:targetCellWidth="6" android:targetCellHeight="5" android:updatePeriodMillis="1800000" android:resizeMode="horizontal|vertical" android:widgetCategory="home_screen" android:initialLayout="@layout/ma_vie_widget" />
-          EOF
-          cat > android/app/src/main/res/drawable/widget_frame.xml <<'EOF'
-          <shape xmlns:android="http://schemas.android.com/apk/res/android"><solid android:color="#12000000"/><stroke android:width="1dp" android:color="#B8FFFFFF"/><corners android:radius="20dp"/></shape>
-          EOF
-          cat > android/app/src/main/res/drawable/widget_card.xml <<'EOF'
-          <shape xmlns:android="http://schemas.android.com/apk/res/android"><solid android:color="#A00E2730"/><stroke android:width="1dp" android:color="#55FFFFFF"/><corners android:radius="15dp"/></shape>
-          EOF
-          cat > android/app/src/main/res/layout/ma_vie_widget.xml <<'EOF'
-          <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android" android:id="@+id/widgetRoot" android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/widget_frame" android:padding="1dp">
-            <ImageView android:id="@+id/weatherBg" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop"/>
-            <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:padding="11dp">
-              <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal"><TextView android:id="@+id/place" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Lieu" android:textColor="#FFFFFFFF" android:textSize="18sp" android:textStyle="bold"/><TextView android:id="@+id/temp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="--°" android:textColor="#FFFFFFFF" android:textSize="22sp" android:textStyle="bold"/></LinearLayout>
-              <Space android:layout_width="1dp" android:layout_height="0dp" android:layout_weight="1"/>
-              <LinearLayout android:id="@+id/nowCard" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:background="@drawable/widget_card" android:padding="8dp" android:layout_marginBottom="4dp"><TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="MAINTENANT" android:textColor="#FFFFFFFF" android:textStyle="bold" android:textSize="15sp"/><TextView android:id="@+id/now1" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#FFFFFFFF" android:textSize="14sp"/><TextView android:id="@+id/now2" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#FFFFFFFF" android:textSize="14sp"/><TextView android:id="@+id/now3" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#FFFFFFFF" android:textSize="14sp"/><TextView android:id="@+id/now4" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#FFFFFFFF" android:textSize="14sp"/><TextView android:id="@+id/now5" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#FFFFFFFF" android:textSize="14sp"/></LinearLayout>
-              <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:background="@drawable/widget_card" android:padding="8dp" android:layout_marginBottom="4dp"><TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="À SAVOIR" android:textColor="#FFFFFFFF" android:textStyle="bold" android:textSize="15sp"/><TextView android:id="@+id/know1" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#FFFFFFFF" android:textSize="14sp"/><TextView android:id="@+id/know2" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#FFFFFFFF" android:textSize="14sp"/><TextView android:id="@+id/know3" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#FFFFFFFF" android:textSize="14sp"/><TextView android:id="@+id/know4" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#FFFFFFFF" android:textSize="14sp"/></LinearLayout>
-              <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:background="@drawable/widget_card" android:padding="8dp"><TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="POUR MOI" android:textColor="#FFFFFFFF" android:textStyle="bold" android:textSize="15sp"/><TextView android:id="@+id/pourMoi" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="🩸 Glycémie —     🚙 Enyaq —" android:textColor="#FFFFFFFF" android:textSize="14sp" android:maxLines="1"/></LinearLayout>
-            </LinearLayout>
-            <TextView android:layout_width="match_parent" android:layout_height="match_parent" android:background="@drawable/widget_frame"/>
-          </FrameLayout>
-          EOF
-          cat > android/app/src/main/java/ch/sergezehntner/mavie/MaVieWidget.kt <<'EOF'
+          cat > android/app/src/main/java/ch/sergezehntner/mavie/MaVieWidgetProvider.kt <<'EOF'
           package ch.sergezehntner.mavie
-          import android.app.*; import android.appwidget.*; import android.content.*; import android.graphics.*; import android.location.Geocoder; import android.provider.CalendarContract; import android.view.View; import android.widget.RemoteViews; import org.json.JSONObject; import java.net.URL; import java.text.SimpleDateFormat; import java.util.*; import kotlin.concurrent.thread
-          class MaVieWidget:AppWidgetProvider(){
-            data class Ev(val title:String,val start:Long,val end:Long,val allDay:Boolean)
-            override fun onUpdate(c:Context,m:AppWidgetManager,ids:IntArray){ids.forEach{render(c,m,it)}}
-            private fun render(c:Context,m:AppWidgetManager,id:Int){val r=RemoteViews(c.packageName,R.layout.ma_vie_widget);r.setOnClickPendingIntent(R.id.widgetRoot,PendingIntent.getActivity(c,10,Intent(c,MainActivity::class.java),PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE));val u=CalendarContract.CONTENT_URI.buildUpon().appendPath("time").appendPath(System.currentTimeMillis().toString()).build();r.setOnClickPendingIntent(R.id.nowCard,PendingIntent.getActivity(c,11,Intent(Intent.ACTION_VIEW,u),PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE));m.updateAppWidget(id,r);thread{val l=loc(c);val w=weather(l);r.setTextViewText(R.id.place,place(c,l));r.setTextViewText(R.id.temp,w?.first?.let{"${Math.round(it)}°"}?:"--°");r.setImageViewBitmap(R.id.weatherBg,bg(w?.second?:0));val b=bounds();val es=events(c,b);val now=System.currentTimeMillis();val timed=es.filter{!it.allDay&&it.end>now&&it.start<b.second}.sortedBy{it.start};val all=es.filter{it.allDay};val periods=all.filter{it.end-it.start>93600000L};val dates=all.filter{Regex("anniversaire|birthday|mariage|wedding|décès|deces|jubile",RegexOption.IGNORE_CASE).containsMatchIn(it.title)};val know=periods+all.filter{it !in periods&&it !in dates}+dates;fill(r,intArrayOf(R.id.now1,R.id.now2,R.id.now3,R.id.now4,R.id.now5),timed.map{"${hm(it.start)}  ${it.title}  · jusqu'à ${hm(it.end)}"},"Plus de rendez-vous prévu aujourd'hui.");fill(r,intArrayOf(R.id.know1,R.id.know2,R.id.know3,R.id.know4),know.map{if(it in dates)"🎂  ${it.title}" else "•  ${period(it,b.first)}"},"Rien de particulier aujourd'hui.");try{val a=Activity();val li=JSONObject(LibreBridge(c,a).getData());val en=JSONObject(EnyaqBridge(c,a).getData());val g=if(li.optBoolean("ok"))String.format(Locale.FRANCE,"%.1f %s",li.optDouble("mmol"),li.optString("arrow"))else"indisponible";val car=if(en.optBoolean("ok"))"${en.optInt("soc")}% · ${en.optInt("rangeKm")} km"else"indisponible";r.setTextViewText(R.id.pourMoi,"🩸 Glycémie $g     🚙 Enyaq $car")}catch(_:Exception){};m.updateAppWidget(id,r)}}
-            private fun fill(r:RemoteViews,ids:IntArray,lines:List<String>,empty:String){ids.forEachIndexed{i,v->if(i<lines.size){r.setViewVisibility(v,View.VISIBLE);r.setTextViewText(v,lines[i])}else r.setViewVisibility(v,View.GONE)};if(lines.isEmpty()){r.setViewVisibility(ids[0],View.VISIBLE);r.setTextViewText(ids[0],empty)}}
-            private fun bounds():Pair<Long,Long>{val x=Calendar.getInstance().apply{set(Calendar.HOUR_OF_DAY,0);set(Calendar.MINUTE,0);set(Calendar.SECOND,0);set(Calendar.MILLISECOND,0)};val a=x.timeInMillis;x.add(Calendar.DAY_OF_YEAR,1);return a to x.timeInMillis}
-            private fun events(c:Context,b:Pair<Long,Long>):List<Ev>{val o=mutableListOf<Ev>();val u=CalendarContract.Instances.CONTENT_URI.buildUpon().also{android.content.ContentUris.appendId(it,b.first);android.content.ContentUris.appendId(it,b.second)}.build();try{c.contentResolver.query(u,arrayOf(CalendarContract.Instances.TITLE,CalendarContract.Instances.BEGIN,CalendarContract.Instances.END,CalendarContract.Instances.ALL_DAY),null,null,CalendarContract.Instances.BEGIN+" ASC")?.use{q->while(q.moveToNext())o+=Ev(q.getString(0)?:"",q.getLong(1),q.getLong(2),q.getInt(3)==1)}}catch(_:Exception){};return o}
-            private fun hm(t:Long)=SimpleDateFormat("HH:mm",Locale.FRANCE).format(Date(t)); private fun period(e:Ev,d:Long):String{val n=((d-e.start)/86400000L).toInt()+1;val z=((e.end-e.start)/86400000L).toInt().coerceAtLeast(1);return if(z>1)"${e.title} (jour ${n.coerceIn(1,z)}/$z)"else e.title}
-            private fun loc(c:Context):Pair<Double,Double>?=try{val lm=c.getSystemService(Context.LOCATION_SERVICE) as android.location.LocationManager;val x=lm.getProviders(true).mapNotNull{try{lm.getLastKnownLocation(it)}catch(_:Exception){null}}.maxByOrNull{it.time}?:return null;x.latitude to x.longitude}catch(_:Exception){null}
-            private fun place(c:Context,l:Pair<Double,Double>?):String=try{if(l==null)"Lieu"else Geocoder(c,Locale.FRANCE).getFromLocation(l.first,l.second,1)?.firstOrNull()?.locality?:"Lieu"}catch(_:Exception){"Lieu"}
-            private fun weather(l:Pair<Double,Double>?):Pair<Double,Int>?=try{if(l==null)null else JSONObject(URL("https://api.open-meteo.com/v1/forecast?latitude=${l.first}&longitude=${l.second}&current=temperature_2m,weather_code").readText()).getJSONObject("current").let{it.getDouble("temperature_2m") to it.getInt("weather_code")}}catch(_:Exception){null}
-            private fun bg(code:Int):Bitmap{val b=Bitmap.createBitmap(1000,700,Bitmap.Config.ARGB_8888);val c=Canvas(b);val night=Calendar.getInstance().get(Calendar.HOUR_OF_DAY)!in 7..19;val p=Paint().apply{shader=LinearGradient(0f,0f,0f,700f,if(night)Color.rgb(5,43,70)else Color.rgb(37,133,195),if(night)Color.rgb(7,88,105)else Color.rgb(131,188,205),Shader.TileMode.CLAMP)};c.drawRect(0f,0f,1000f,700f,p);val sun=Paint(Paint.ANTI_ALIAS_FLAG).apply{color=Color.rgb(255,220,80)};c.drawCircle(830f,120f,55f,sun);if(code>0){val q=Paint(Paint.ANTI_ALIAS_FLAG).apply{color=Color.argb(190,235,240,242)};c.drawOval(150f,150f,430f,245f,q);c.drawOval(510f,180f,780f,265f,q)};return b}
+
+          import android.app.PendingIntent
+          import android.appwidget.AppWidgetManager
+          import android.appwidget.AppWidgetProvider
+          import android.content.ComponentName
+          import android.content.Context
+          import android.content.Intent
+          import android.graphics.*
+          import android.location.Geocoder
+          import android.location.LocationManager
+          import android.provider.CalendarContract
+          import android.widget.RemoteViews
+          import org.json.JSONObject
+          import java.net.URL
+          import java.text.SimpleDateFormat
+          import java.util.*
+          import kotlin.concurrent.thread
+
+          class MaVieWidgetProvider : AppWidgetProvider() {
+              override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) = refresh(context)
+              override fun onEnabled(context: Context) = refresh(context)
+
+              companion object {
+                  fun refresh(context: Context) { thread { try { update(context) } catch (_: Exception) {} } }
+
+                  private fun update(context: Context) {
+                      val mgr=AppWidgetManager.getInstance(context)
+                      val ids=mgr.getAppWidgetIds(ComponentName(context,MaVieWidgetProvider::class.java)); if(ids.isEmpty()) return
+                      val v=RemoteViews(context.packageName,R.layout.ma_vie_widget)
+                      val (lat,lon)=lastLocation(context)
+                      val weather=weather(lat,lon)
+                      v.setTextViewText(R.id.widget_place,place(context,lat,lon))
+                      v.setTextViewText(R.id.widget_temp,weather.first)
+                      v.setImageViewBitmap(R.id.weather_background,weatherBitmap(weather.second))
+                      val ev=events(context)
+                      v.setTextViewText(R.id.widget_now,ev.first)
+                      v.setTextViewText(R.id.widget_know,ev.second)
+                      val libre=try{JSONObject(LibreBridge(context,null).getData())}catch(_:Exception){null}
+                      v.setTextViewText(R.id.widget_glucose, if(libre?.optBoolean("ok")==true) "🩸 %.1f mmol/L %s".format(Locale.US,libre.optDouble("mmol"),libre.optString("arrow")) else "🩸 Glycémie —")
+                      val enyaq=try{JSONObject(EnyaqBridge(context,null).getData())}catch(_:Exception){null}
+                      v.setTextViewText(R.id.widget_enyaq,if(enyaq?.optBoolean("ok")==true) "🚙 %.0f %% · %.0f km".format(Locale.US,enyaq.optDouble("percent"),enyaq.optDouble("km")) else "🚙 Enyaq —")
+                      val app=PendingIntent.getActivity(context,10,Intent(context,MainActivity::class.java),PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+                      v.setOnClickPendingIntent(R.id.widget_root,app)
+                      val calUri=CalendarContract.CONTENT_URI.buildUpon().appendPath("time").appendPath(System.currentTimeMillis().toString()).build()
+                      val cal=PendingIntent.getActivity(context,11,Intent(Intent.ACTION_VIEW,calUri),PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+                      v.setOnClickPendingIntent(R.id.card_now,cal)
+                      ids.forEach{mgr.updateAppWidget(it,v)}
+                  }
+
+                  private fun lastLocation(c:Context):Pair<Double?,Double?> { return try{
+                      val lm=c.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+                      val l=lm.getProviders(true).mapNotNull{try{lm.getLastKnownLocation(it)}catch(_:SecurityException){null}}.maxByOrNull{it.time}
+                      Pair(l?.latitude,l?.longitude)
+                  }catch(_:Exception){Pair(null,null)} }
+
+                  private fun place(c:Context,lat:Double?,lon:Double?):String { if(lat==null||lon==null)return "Ma Vie"; return try{
+                      @Suppress("DEPRECATION") val a=Geocoder(c,Locale.getDefault()).getFromLocation(lat,lon,1)?.firstOrNull()
+                      a?.locality ?: a?.subLocality ?: a?.adminArea ?: "Ma Vie"
+                  }catch(_:Exception){"Ma Vie"} }
+
+                  private fun weather(lat:Double?,lon:Double?):Pair<String,Int>{ if(lat==null||lon==null)return Pair("--°",0); return try{
+                      val raw=URL("https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon&current=temperature_2m,weather_code,is_day&timezone=auto").readText()
+                      val o=JSONObject(raw).getJSONObject("current"); Pair("%.0f°".format(o.getDouble("temperature_2m")),o.getInt("weather_code")+(if(o.optInt("is_day",1)==0)1000 else 0))
+                  }catch(_:Exception){Pair("--°",0)} }
+
+                  private fun weatherBitmap(code:Int):Bitmap{
+                      val w=1200; val h=700; val b=Bitmap.createBitmap(w,h,Bitmap.Config.ARGB_8888); val c=Canvas(b)
+                      val night=code>=1000; val wc=code%1000
+                      val top=if(night)Color.rgb(5,44,69) else Color.rgb(54,150,218); val bot=if(night)Color.rgb(8,91,111) else Color.rgb(174,218,239)
+                      c.drawRect(0f,0f,w.toFloat(),h.toFloat(),Paint().apply{shader=LinearGradient(0f,0f,0f,h.toFloat(),top,bot,Shader.TileMode.CLAMP)})
+                      val p=Paint(Paint.ANTI_ALIAS_FLAG)
+                      if(night){p.color=Color.rgb(255,239,170);c.drawCircle(980f,115f,55f,p);p.color=top;c.drawCircle(1005f,95f,55f,p);p.color=Color.WHITE; for(i in 0..18)c.drawCircle(((i*173)%w).toFloat(),(70+(i*97)%360).toFloat(),3f,p)}
+                      else {p.color=Color.rgb(255,218,70);c.drawCircle(1010f,110f,58f,p)}
+                      if(wc in 1..3 || wc in 45..48 || wc>=51){p.color=Color.argb(if(wc>=51)210 else 170,235,240,244); listOf(260f,410f,570f,760f).forEachIndexed{i,x->c.drawCircle(x,180f+(i%2)*30,75f,p)}}
+                      if(wc>=51){p.color=Color.argb(180,190,225,255);p.strokeWidth=5f; for(x in 160..1050 step 90)c.drawLine(x.toFloat(),300f,(x-25).toFloat(),365f,p)}
+                      return b
+                  }
+
+                  private fun events(c:Context):Pair<String,String>{
+                      val now=System.currentTimeMillis(); val z=Calendar.getInstance(); val end=Calendar.getInstance().apply{set(Calendar.HOUR_OF_DAY,23);set(Calendar.MINUTE,59);set(Calendar.SECOND,59)}.timeInMillis
+                      val uri=CalendarContract.Instances.CONTENT_URI.buildUpon().also{android.content.ContentUris.appendId(it,now-86400000L);android.content.ContentUris.appendId(it,end)}.build()
+                      val p=arrayOf(CalendarContract.Instances.TITLE,CalendarContract.Instances.BEGIN,CalendarContract.Instances.END,CalendarContract.Instances.EVENT_LOCATION,CalendarContract.Instances.ALL_DAY)
+                      val timed=mutableListOf<String>(); val know=mutableListOf<String>(); val tf=SimpleDateFormat("HH:mm",Locale.getDefault())
+                      try{c.contentResolver.query(uri,p,null,null,CalendarContract.Instances.BEGIN+" ASC")?.use{q->while(q.moveToNext()){
+                          val title=q.getString(0)?:""; val start=q.getLong(1); val stop=q.getLong(2); val loc=q.getString(3)?:""; val all=q.getInt(4)==1
+                          if(all){ if(know.size<3) {
+                              val days=((stop-start)/86400000L).toInt().coerceAtLeast(1)
+                              val day=((now-start)/86400000L).toInt().coerceIn(0,days-1)+1
+                              val label=if(days>1) "$title (jour $day/$days)" else title
+                              val icon=if(Regex("anniversaire|birthday",RegexOption.IGNORE_CASE).containsMatchIn(title)) "🎂 " else "• "
+                              know.add(icon+label)
+                          }}
+                          else if(stop>=now && start<=end){ if(timed.size<4) timed.add(tf.format(Date(start))+"  "+title+(if(loc.isNotBlank())"\n     "+loc else "")) }
+                      }}}catch(_:Exception){}
+                      return Pair(if(timed.isEmpty())"Plus de rendez-vous prévu aujourd’hui." else timed.joinToString("\n"),if(know.isEmpty())"Rien de particulier aujourd’hui." else know.joinToString("\n"))
+                  }
+              }
           }
           EOF
+
           cat > android/app/src/main/java/ch/sergezehntner/mavie/MainActivity.kt <<'EOF'
           package ch.sergezehntner.mavie
           import android.Manifest
@@ -486,6 +607,7 @@ jobs:
                   val nonce=System.currentTimeMillis()
                   val headers=mapOf("Cache-Control" to "no-cache, no-store, max-age=0","Pragma" to "no-cache")
                   webView.loadUrl(startUrl+"?app=0.3.0&t="+nonce,headers)
+                  MaVieWidgetProvider.refresh(this)
               }
           }
           EOF
