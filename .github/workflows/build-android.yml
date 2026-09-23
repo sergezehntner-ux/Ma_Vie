@@ -65,8 +65,8 @@ jobs:
                   applicationId = "ch.sergezehntner.mavie"
                   minSdk = 26
                   targetSdk = 35
-                  versionCode = 213
-                  versionName = "0.3.0.3"
+                  versionCode = 214
+                  versionName = "0.3.0.4"
               }
               signingConfigs {
                   create("release") {
@@ -552,16 +552,25 @@ jobs:
                       val timed=mutableListOf<String>(); val periods=mutableListOf<String>(); val events=mutableListOf<String>(); val important=mutableListOf<String>(); val tf=SimpleDateFormat("HH:mm",Locale.getDefault())
                       try{c.contentResolver.query(uri,p,null,null,CalendarContract.Instances.BEGIN+" ASC")?.use{q->while(q.moveToNext()){
                           val title=q.getString(0)?:""; val start=q.getLong(1); val stop=q.getLong(2); val loc=q.getString(3)?:""; val all=q.getInt(4)==1
-                          if(all && start<tomorrowStart && stop>todayStart){
-                              val days=((stop-start)/86400000L).toInt().coerceAtLeast(1)
-                              val birthday=Regex("anniversaire|birthday",RegexOption.IGNORE_CASE).containsMatchIn(title)
-                              if(days>1){
-                                  val day=((todayStart-start)/86400000L).toInt().coerceIn(0,days-1)+1
-                                  periods.add("🏖️ "+title+" (jour $day/$days)")
-                              } else if(birthday) important.add("🎂 "+title)
-                              else events.add("• "+title)
+                          if(all){
+                              // CalendarProvider stores ALL_DAY BEGIN/END at UTC midnight.  Do not compare
+                              // those instants with local-midnight milliseconds: around UTC+02 this makes
+                              // yesterday leak into today and shifts the day number of multi-day periods.
+                              val zone=java.time.ZoneId.systemDefault()
+                              val today=java.time.LocalDate.now(zone)
+                              val startDate=java.time.Instant.ofEpochMilli(start).atZone(java.time.ZoneOffset.UTC).toLocalDate()
+                              val endDateExclusive=java.time.Instant.ofEpochMilli(stop).atZone(java.time.ZoneOffset.UTC).toLocalDate()
+                              if(!today.isBefore(startDate) && today.isBefore(endDateExclusive)){
+                                  val days=java.time.temporal.ChronoUnit.DAYS.between(startDate,endDateExclusive).toInt().coerceAtLeast(1)
+                                  val birthday=Regex("anniversaire|birthday",RegexOption.IGNORE_CASE).containsMatchIn(title)
+                                  if(days>1){
+                                      val day=(java.time.temporal.ChronoUnit.DAYS.between(startDate,today).toInt()+1).coerceIn(1,days)
+                                      periods.add("🏖️ "+title+" (jour $day/$days)")
+                                  } else if(birthday) important.add("🎂 "+title)
+                                  else events.add("• "+title)
+                              }
                           }
-                          else if(!all && stop>=now && start<=end){ if(timed.size<4) timed.add(tf.format(Date(start))+"  "+title+(if(loc.isNotBlank())"\n     "+loc else "")) }
+                          else if(stop>=now && start<=end){ if(timed.size<4) timed.add(tf.format(Date(start))+"  "+title+(if(loc.isNotBlank())"\n     "+loc else "")) }
                       }}}catch(_:Exception){}
                       val know=(periods+events+important).take(3)
                       return Pair(if(timed.isEmpty())"Plus de rendez-vous prévu aujourd’hui." else timed.joinToString("\n"),if(know.isEmpty())"Rien de particulier aujourd’hui." else know.joinToString("\n"))
@@ -635,5 +644,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Ma_Vie_Android_v0.3.0.1_Widget
+          name: Ma_Vie_Android_v0.3.0.4_Widget
           path: android/app/build/outputs/apk/release/app-release.apk
