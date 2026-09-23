@@ -25,7 +25,7 @@ jobs:
         shell: bash
         run: |
           mkdir -p android/app/src/main/java/ch/sergezehntner/mavie
-          mkdir -p android/app/src/main/res/layout android/app/src/main/res/values android/app/src/main/res/drawable android/app/src/main/res/xml
+          mkdir -p android/app/src/main/res/layout android/app/src/main/res/values android/app/src/main/res/drawable android/app/src/main/res/drawable-nodpi android/app/src/main/res/xml
 
           cat > android/gradle.properties <<'EOF'
           android.useAndroidX=true
@@ -65,8 +65,8 @@ jobs:
                   applicationId = "ch.sergezehntner.mavie"
                   minSdk = 26
                   targetSdk = 35
-                  versionCode = 214
-                  versionName = "0.3.0.4"
+                  versionCode = 215
+                  versionName = "0.3.0.5"
               }
               signingConfigs {
                   create("release") {
@@ -91,6 +91,8 @@ jobs:
           EOF
 
           cp icon-512.png android/app/src/main/res/drawable/ic_launcher.png
+          cp widget-ursy-green.jpg android/app/src/main/res/drawable-nodpi/widget_ursy_green.jpg
+          cp widget-ursy-snow.jpg android/app/src/main/res/drawable-nodpi/widget_ursy_snow.jpg
 
           cat > android/app/src/main/AndroidManifest.xml <<'EOF'
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
@@ -495,9 +497,10 @@ jobs:
                       val v=RemoteViews(context.packageName,R.layout.ma_vie_widget)
                       val (lat,lon)=lastLocation(context)
                       val weather=weather(lat,lon)
-                      v.setTextViewText(R.id.widget_place,place(context,lat,lon))
+                      val placeName=place(context,lat,lon)
+                      v.setTextViewText(R.id.widget_place,placeName)
                       v.setTextViewText(R.id.widget_temp,weather.first)
-                      v.setImageViewBitmap(R.id.weather_background,weatherBitmap(weather.second))
+                      v.setImageViewBitmap(R.id.weather_background,sceneBitmap(context,weather.second,placeName))
                       val ev=events(context)
                       v.setTextViewText(R.id.widget_now,ev.first)
                       v.setTextViewText(R.id.widget_know,ev.second)
@@ -529,16 +532,34 @@ jobs:
                       val o=JSONObject(raw).getJSONObject("current"); Pair("%.0f°".format(o.getDouble("temperature_2m")),o.getInt("weather_code")+(if(o.optInt("is_day",1)==0)1000 else 0))
                   }catch(_:Exception){Pair("--°",0)} }
 
-                  private fun weatherBitmap(code:Int):Bitmap{
+                  private fun sceneBitmap(context:Context,code:Int,placeName:String):Bitmap{
                       val w=1200; val h=700; val b=Bitmap.createBitmap(w,h,Bitmap.Config.ARGB_8888); val c=Canvas(b)
                       val night=code>=1000; val wc=code%1000
-                      val top=if(night)Color.rgb(5,44,69) else Color.rgb(54,150,218); val bot=if(night)Color.rgb(8,91,111) else Color.rgb(174,218,239)
-                      c.drawRect(0f,0f,w.toFloat(),h.toFloat(),Paint().apply{shader=LinearGradient(0f,0f,0f,h.toFloat(),top,bot,Shader.TileMode.CLAMP)})
+                      val isUrsy=placeName.equals("Ursy",ignoreCase=true)
+                      val snowy=wc in 71..77 || wc in 85..86
+                      val photo=if(isUrsy) BitmapFactory.decodeResource(context.resources,if(snowy)R.drawable.widget_ursy_snow else R.drawable.widget_ursy_green) else null
+                      if(photo!=null){
+                          val scale=maxOf(w.toFloat()/photo.width,h.toFloat()/photo.height)
+                          val dw=photo.width*scale; val dh=photo.height*scale
+                          val dst=RectF((w-dw)/2f,(h-dh)/2f,(w+dw)/2f,(h+dh)/2f)
+                          c.drawBitmap(photo,null,dst,Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG))
+                          c.drawRect(0f,0f,w.toFloat(),h.toFloat(),Paint().apply{color=Color.argb(if(night)145 else 28,0,28,48)})
+                      } else {
+                          val top=if(night)Color.rgb(5,44,69) else Color.rgb(54,150,218); val bot=if(night)Color.rgb(8,91,111) else Color.rgb(174,218,239)
+                          c.drawRect(0f,0f,w.toFloat(),h.toFloat(),Paint().apply{shader=LinearGradient(0f,0f,0f,h.toFloat(),top,bot,Shader.TileMode.CLAMP)})
+                      }
                       val p=Paint(Paint.ANTI_ALIAS_FLAG)
-                      if(night){p.color=Color.rgb(255,239,170);c.drawCircle(980f,115f,55f,p);p.color=top;c.drawCircle(1005f,95f,55f,p);p.color=Color.WHITE; for(i in 0..18)c.drawCircle(((i*173)%w).toFloat(),(70+(i*97)%360).toFloat(),3f,p)}
-                      else {p.color=Color.rgb(255,218,70);c.drawCircle(1010f,110f,58f,p)}
-                      if(wc in 1..3 || wc in 45..48 || wc>=51){p.color=Color.argb(if(wc>=51)210 else 170,235,240,244); listOf(260f,410f,570f,760f).forEachIndexed{i,x->c.drawCircle(x,180f+(i%2)*30,75f,p)}}
-                      if(wc>=51){p.color=Color.argb(180,190,225,255);p.strokeWidth=5f; for(x in 160..1050 step 90)c.drawLine(x.toFloat(),300f,(x-25).toFloat(),365f,p)}
+                      if(night){
+                          p.color=Color.rgb(255,239,170);c.drawCircle(980f,115f,55f,p)
+                          p.color=Color.argb(235,5,44,69);c.drawCircle(1005f,95f,55f,p)
+                          p.color=Color.WHITE; for(i in 0..18)c.drawCircle(((i*173)%w).toFloat(),(70+(i*97)%360).toFloat(),3f,p)
+                      } else {p.color=Color.rgb(255,218,70);c.drawCircle(1010f,110f,58f,p)}
+                      if(wc in 1..3 || wc in 45..48 || wc>=51){
+                          p.color=Color.argb(if(wc>=51)210 else 170,235,240,244)
+                          listOf(260f,410f,570f,760f).forEachIndexed{i,x->c.drawCircle(x,180f+(i%2)*30,75f,p)}
+                      }
+                      if(wc>=51 && wc !in 71..77 && wc !in 85..86){p.color=Color.argb(180,190,225,255);p.strokeWidth=5f; for(x in 160..1050 step 90)c.drawLine(x.toFloat(),300f,(x-25).toFloat(),365f,p)}
+                      if(snowy){p.color=Color.argb(220,255,255,255); for(i in 0..28){val x=((i*149)%w).toFloat(); val y=(80+(i*83)%420).toFloat(); c.drawCircle(x,y,6f,p)}}
                       return b
                   }
 
@@ -644,5 +665,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Ma_Vie_Android_v0.3.0.4_Widget
+          name: Ma_Vie_Android_v0.3.0.5_Widget_PhotoLieu
           path: android/app/build/outputs/apk/release/app-release.apk
