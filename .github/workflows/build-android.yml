@@ -66,7 +66,7 @@ jobs:
                   minSdk = 26
                   targetSdk = 35
                   versionCode = 215
-                  versionName = "0.3.0.5"
+                  versionName = "0.3.0.6"
               }
               signingConfigs {
                   create("release") {
@@ -495,12 +495,20 @@ jobs:
                       val mgr=AppWidgetManager.getInstance(context)
                       val ids=mgr.getAppWidgetIds(ComponentName(context,MaVieWidgetProvider::class.java)); if(ids.isEmpty()) return
                       val v=RemoteViews(context.packageName,R.layout.ma_vie_widget)
-                      val (lat,lon)=lastLocation(context)
+                      val liveLocation=lastLocation(context)
+                      val prefs=context.getSharedPreferences("ma_vie_widget",Context.MODE_PRIVATE)
+                      if(liveLocation.first!=null && liveLocation.second!=null){
+                          prefs.edit().putLong("last_lat",java.lang.Double.doubleToRawLongBits(liveLocation.first!!)).putLong("last_lon",java.lang.Double.doubleToRawLongBits(liveLocation.second!!)).apply()
+                      }
+                      val lat=liveLocation.first ?: if(prefs.contains("last_lat")) java.lang.Double.longBitsToDouble(prefs.getLong("last_lat",0L)) else null
+                      val lon=liveLocation.second ?: if(prefs.contains("last_lon")) java.lang.Double.longBitsToDouble(prefs.getLong("last_lon",0L)) else null
                       val weather=weather(lat,lon)
                       val placeName=place(context,lat,lon)
-                      v.setTextViewText(R.id.widget_place,placeName)
+                      if(placeName!="Ma Vie") prefs.edit().putString("last_place",placeName).apply()
+                      val shownPlace=if(placeName=="Ma Vie") prefs.getString("last_place","Ma Vie") ?: "Ma Vie" else placeName
+                      v.setTextViewText(R.id.widget_place,shownPlace)
                       v.setTextViewText(R.id.widget_temp,weather.first)
-                      v.setImageViewBitmap(R.id.weather_background,sceneBitmap(context,weather.second,placeName))
+                      v.setImageViewBitmap(R.id.weather_background,sceneBitmap(context,weather.second,shownPlace,lat,lon))
                       val ev=events(context)
                       v.setTextViewText(R.id.widget_now,ev.first)
                       v.setTextViewText(R.id.widget_know,ev.second)
@@ -532,10 +540,21 @@ jobs:
                       val o=JSONObject(raw).getJSONObject("current"); Pair("%.0f°".format(o.getDouble("temperature_2m")),o.getInt("weather_code")+(if(o.optInt("is_day",1)==0)1000 else 0))
                   }catch(_:Exception){Pair("--°",0)} }
 
-                  private fun sceneBitmap(context:Context,code:Int,placeName:String):Bitmap{
+                  private fun distanceKm(aLat:Double,aLon:Double,bLat:Double,bLon:Double):Double{
+                      val r=6371.0
+                      val dLat=Math.toRadians(bLat-aLat); val dLon=Math.toRadians(bLon-aLon)
+                      val x=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(Math.toRadians(aLat))*Math.cos(Math.toRadians(bLat))*Math.sin(dLon/2)*Math.sin(dLon/2)
+                      return 2*r*Math.atan2(Math.sqrt(x),Math.sqrt(1-x))
+                  }
+
+                  private fun sceneBitmap(context:Context,code:Int,placeName:String,lat:Double?,lon:Double?):Bitmap{
                       val w=1200; val h=700; val b=Bitmap.createBitmap(w,h,Bitmap.Config.ARGB_8888); val c=Canvas(b)
                       val night=code>=1000; val wc=code%1000
-                      val isUrsy=placeName.equals("Ursy",ignoreCase=true)
+                      // Prefer the actual coordinates: reverse geocoding can be unavailable when a widget
+                      // is first added.  The 3.5 km fallback covers the Ursy home area without turning
+                      // every nearby trip into the home photograph.
+                      val nearUrsy=lat!=null && lon!=null && distanceKm(lat,lon,46.634729,6.834161)<=3.5
+                      val isUrsy=placeName.equals("Ursy",ignoreCase=true) || nearUrsy
                       val snowy=wc in 71..77 || wc in 85..86
                       val photo=if(isUrsy) BitmapFactory.decodeResource(context.resources,if(snowy)R.drawable.widget_ursy_snow else R.drawable.widget_ursy_green) else null
                       if(photo!=null){
@@ -665,5 +684,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Ma_Vie_Android_v0.3.0.5_Widget_PhotoLieu
+          name: Ma_Vie_Android_v0.3.0.6_Widget_PhotoLieu
           path: android/app/build/outputs/apk/release/app-release.apk
