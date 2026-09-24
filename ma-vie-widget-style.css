@@ -1,0 +1,78 @@
+/* Ma Vie v0.3.9 — langage visuel du widget : photo + météo + construction depuis le bas */
+:root{
+  --mv-glass:rgba(4,22,29,.72);
+  --mv-glass-soft:rgba(4,22,29,.64);
+  --mv-line:rgba(235,249,245,.55);
+  --mv-text:#f8fbfa;
+  --mv-muted:rgba(242,249,247,.78);
+}
+html,body{min-height:100%;background:#173a48!important}
+body{color:var(--mv-text)!important;background:transparent!important}
+.weather-scene{
+  z-index:0!important;
+  background-color:#173a48!important;
+  background-image:linear-gradient(rgba(14,48,64,.08),rgba(2,17,22,.14)),url('ursy-green.jpg')!important;
+  background-size:cover!important;
+  background-position:right center!important;
+  background-repeat:no-repeat!important;
+  filter:none!important;
+}
+body[data-weather="snow"] .weather-scene{
+  background-image:linear-gradient(rgba(30,55,70,.10),rgba(6,20,26,.14)),url('ursy-snow.jpg')!important;
+}
+/* La photo est le fond. Les éléments météo existants restent superposés. */
+.weather-scene .horizon{display:none!important}
+.weather-scene:after{background:linear-gradient(180deg,rgba(0,24,36,.02) 0%,rgba(0,16,22,.05) 50%,rgba(0,12,16,.15) 100%)!important}
+.app-shell{
+  position:relative;z-index:1;
+  max-width:1100px!important;
+  min-height:100dvh;
+  margin:auto;
+  padding:14px 14px 132px!important;
+  display:flex;
+  flex-direction:column;
+}
+.topbar{flex:0 0 auto;color:#fff!important;text-shadow:0 2px 9px #001a25cc}
+.brand,.tagline,.version,.day-weather-wrap,.weather-location{color:#fff!important}
+.tagline,.version{opacity:.78}
+.grid{
+  flex:1 1 auto;
+  min-height:0;
+  display:flex!important;
+  flex-direction:column;
+  justify-content:flex-end;
+  gap:9px!important;
+  padding-top:18px;
+}
+.grid>.card,.permanent-dock{
+  color:var(--mv-text)!important;
+  border:1px solid var(--mv-line)!important;
+  background:var(--mv-glass)!important;
+  box-shadow:0 5px 20px rgba(0,0,0,.14)!important;
+  backdrop-filter:blur(5px) saturate(.92)!important;
+  -webkit-backdrop-filter:blur(5px) saturate(.92)!important;
+}
+.grid>.card{min-height:0!important;height:auto!important;border-radius:16px!important}
+.card-title,.card-title strong,.appointment time,.appointment strong,.tomorrow-list strong,.guide-card strong{color:#fff!important}
+.source,.appointment small,.tomorrow-card small,.guide-card p{color:var(--mv-muted)!important}
+.now-card{order:1}.tomorrow-card{order:2}.guide-card{order:3}
+/* Le dock reste ancré au bas : MES APPS, puis POUR MOI juste au-dessus. */
+.permanent-dock{bottom:max(8px,env(safe-area-inset-bottom))!important;gap:0!important;border-radius:16px!important;overflow:hidden}
+.permanent-dock .personal-card,.permanent-dock .quickbar{color:#fff!important;background:transparent!important}
+.permanent-dock .metric{background:rgba(255,255,255,.10)!important;border-color:rgba(255,255,255,.20)!important;color:#fff!important}
+.permanent-dock .metric small{color:var(--mv-muted)!important}
+.permanent-dock .quickbar{border-top:1px solid rgba(255,255,255,.30)!important}
+.permanent-dock button,.quickbar-title{color:#fff!important}
+/* À SAVOIR garde toutes ses fonctions; seulement le langage visuel change. */
+.guide-card button{color:#fff!important;text-decoration-color:rgba(255,255,255,.75)!important}
+.guide-card hr{border-color:rgba(255,255,255,.32)!important}
+@media(min-width:700px){
+  .app-shell{padding:16px 20px 126px!important}
+  .grid{padding-top:24px;gap:10px!important}
+}
+@media(max-width:699px){
+  .app-shell{padding:8px 9px 108px!important}
+  .grid{padding-top:8px;gap:5px!important}
+  .grid>.card{border-radius:13px!important}
+  .permanent-dock{border-radius:13px!important}
+}
