@@ -275,3 +275,77 @@ body[data-weather="cloud"] .c1{right:3%!important;top:13%!important;transform:sc
 body[data-weather="cloud"] .c2{left:9%!important;top:29%!important;transform:scale(1.02,.84) rotate(3deg)!important}
 body[data-weather="cloud"] .c3{left:46%!important;top:20%!important;transform:scale(.76,.78) rotate(-5deg)!important}
 body[data-weather="cloud"] .c4{right:26%!important;top:34%!important;transform:scale(.64,.74) rotate(4deg)!important}
+
+/* v0.3.14 — Photo d'abord : la météo habille la photo, elle ne la floute plus. */
+.weather-scene{
+  background-image:linear-gradient(rgba(10,35,48,.015),rgba(2,16,22,.045)),url('ursy-green.jpg')!important;
+}
+body[data-weather="snow"] .weather-scene{
+  background-image:linear-gradient(rgba(20,38,50,.025),rgba(5,16,22,.055)),url('ursy-snow.jpg')!important;
+}
+.weather-scene:after{
+  background:linear-gradient(180deg,rgba(0,20,30,0) 0%,rgba(0,14,20,.012) 58%,rgba(0,10,14,.06) 100%)!important;
+}
+
+/* Verre plus clair : on garde la photo lisible sous les cartes. */
+.card,.permanent-dock{
+  backdrop-filter:blur(3px) saturate(1.03)!important;
+  -webkit-backdrop-filter:blur(3px) saturate(1.03)!important;
+}
+
+/* Soleil photographique : noyau clair, halo large, rayons fins. */
+body:not([data-period="night"]) .celestial{
+  width:62px!important;height:62px!important;
+  background:radial-gradient(circle at 45% 42%,#fffef0 0 7%,#fff5b7 17%,#ffe778 38%,#ffd553 68%,#f5c33a 100%)!important;
+  box-shadow:
+    0 0 12px 7px rgba(255,248,202,.68),
+    0 0 32px 18px rgba(255,226,112,.38),
+    0 0 72px 38px rgba(255,207,60,.18),
+    0 0 130px 68px rgba(255,195,38,.07)!important;
+}
+body:not([data-period="night"]) .celestial:before{
+  width:350px!important;height:350px!important;
+  background:repeating-conic-gradient(from 3deg,
+    rgba(255,247,203,.28) 0deg .55deg,
+    rgba(255,228,126,.09) .55deg 1.25deg,
+    transparent 1.25deg 12.7deg)!important;
+  -webkit-mask-image:radial-gradient(circle,transparent 0 19%,rgba(0,0,0,.96) 31%,rgba(0,0,0,.46) 53%,transparent 77%)!important;
+  mask-image:radial-gradient(circle,transparent 0 19%,rgba(0,0,0,.96) 31%,rgba(0,0,0,.46) 53%,transparent 77%)!important;
+  filter:blur(.7px)!important;opacity:.82!important;
+}
+body:not([data-period="night"]) .celestial:after{
+  width:205px!important;height:205px!important;
+  background:radial-gradient(circle,rgba(255,250,215,.22) 0 22%,rgba(255,226,119,.10) 43%,transparent 70%)!important;
+  filter:blur(5px)!important;
+}
+
+/* Nuages : petites masses irrégulières, nettes au centre et seulement adoucies aux bords. */
+.weather-scene .cloud{
+  width:176px!important;height:38px!important;
+  border-radius:48% 55% 46% 52%!important;
+  background:
+    radial-gradient(ellipse at 22% 63%,rgba(255,255,255,.54) 0 19%,rgba(248,252,253,.26) 42%,transparent 63%),
+    radial-gradient(ellipse at 43% 39%,rgba(255,255,255,.76) 0 26%,rgba(247,251,252,.39) 48%,transparent 68%),
+    radial-gradient(ellipse at 68% 55%,rgba(255,255,255,.61) 0 24%,rgba(241,248,251,.25) 48%,transparent 66%),
+    linear-gradient(180deg,rgba(255,255,255,.56),rgba(232,243,248,.24) 76%,transparent)!important;
+  box-shadow:0 5px 12px rgba(218,235,242,.10)!important;
+  filter:blur(1.4px)!important;
+}
+.weather-scene .cloud:before{
+  width:78px!important;height:48px!important;left:25px!important;bottom:4px!important;
+  background:radial-gradient(ellipse at 50% 48%,rgba(255,255,255,.70) 0 38%,rgba(240,248,251,.28) 63%,transparent 79%)!important;
+  filter:blur(.6px)!important;transform:rotate(-6deg)!important;
+}
+.weather-scene .cloud:after{
+  width:94px!important;height:43px!important;right:12px!important;bottom:3px!important;
+  background:radial-gradient(ellipse at 48% 50%,rgba(255,255,255,.62) 0 37%,rgba(238,247,250,.23) 64%,transparent 80%)!important;
+  filter:blur(.7px)!important;transform:rotate(4deg)!important;
+}
+body[data-weather="cloud"] .weather-scene .cloud,
+body[data-weather="fog"] .weather-scene .cloud{opacity:.60!important}
+body[data-weather="rain"] .weather-scene .cloud,
+body[data-weather="snow"] .weather-scene .cloud{opacity:.70!important}
+body[data-weather="cloud"] .c1{right:5%!important;top:15%!important;transform:scale(1.04,.86) rotate(-4deg)!important}
+body[data-weather="cloud"] .c2{left:12%!important;top:30%!important;transform:scale(.88,.80) rotate(3deg)!important}
+body[data-weather="cloud"] .c3{left:49%!important;top:22%!important;transform:scale(.64,.72) rotate(-5deg)!important}
+body[data-weather="cloud"] .c4{right:29%!important;top:35%!important;transform:scale(.52,.68) rotate(4deg)!important}
