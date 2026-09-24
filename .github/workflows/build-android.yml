@@ -568,17 +568,56 @@ jobs:
                           c.drawRect(0f,0f,w.toFloat(),h.toFloat(),Paint().apply{shader=LinearGradient(0f,0f,0f,h.toFloat(),top,bot,Shader.TileMode.CLAMP)})
                       }
                       val p=Paint(Paint.ANTI_ALIAS_FLAG)
-                      if(night){
-                          p.color=Color.rgb(255,239,170);c.drawCircle(820f,115f,55f,p)
-                          p.color=Color.argb(235,5,44,69);c.drawCircle(845f,95f,55f,p)
-                          p.color=Color.WHITE; for(i in 0..18)c.drawCircle(((i*173)%w).toFloat(),(70+(i*97)%360).toFloat(),3f,p)
-                      } else {p.color=Color.rgb(255,218,70);c.drawCircle(850f,110f,58f,p)}
-                      if(wc in 1..3 || wc in 45..48 || wc>=51){
-                          p.color=Color.argb(if(wc>=51)210 else 170,235,240,244)
-                          listOf(260f,410f,570f,760f).forEachIndexed{i,x->c.drawCircle(x,180f+(i%2)*30,75f,p)}
+
+                      // Weather is atmospheric, not a set of geometric stickers.
+                      // Soft radial gradients let the light/clouds blend into the real photograph.
+                      fun glow(cx:Float,cy:Float,r:Float,inner:Int,outer:Int){
+                          p.shader=RadialGradient(cx,cy,r,inner,outer,Shader.TileMode.CLAMP)
+                          c.drawCircle(cx,cy,r,p); p.shader=null
                       }
-                      if(wc>=51 && wc !in 71..77 && wc !in 85..86){p.color=Color.argb(180,190,225,255);p.strokeWidth=5f; for(x in 160..1050 step 90)c.drawLine(x.toFloat(),300f,(x-25).toFloat(),365f,p)}
-                      if(snowy){p.color=Color.argb(220,255,255,255); for(i in 0..28){val x=((i*149)%w).toFloat(); val y=(80+(i*83)%420).toFloat(); c.drawCircle(x,y,6f,p)}}
+                      fun softOval(cx:Float,cy:Float,rx:Float,ry:Float,alpha:Int){
+                          c.save(); c.scale(1f,ry/rx,cx,cy)
+                          p.shader=RadialGradient(cx,cy,rx,Color.argb(alpha,246,249,252),Color.argb(0,246,249,252),Shader.TileMode.CLAMP)
+                          c.drawCircle(cx,cy,rx,p); p.shader=null; c.restore()
+                      }
+                      fun cloud(cx:Float,cy:Float,scale:Float,alpha:Int){
+                          // diffuse base + irregular lobes; deliberately asymmetric
+                          softOval(cx,cy+18f*scale,150f*scale,48f*scale,alpha*2/3)
+                          softOval(cx-82f*scale,cy+5f*scale,76f*scale,45f*scale,alpha*3/4)
+                          softOval(cx-28f*scale,cy-24f*scale,94f*scale,63f*scale,alpha)
+                          softOval(cx+48f*scale,cy-38f*scale,108f*scale,72f*scale,alpha)
+                          softOval(cx+112f*scale,cy+2f*scale,82f*scale,50f*scale,alpha*4/5)
+                          softOval(cx+35f*scale,cy+12f*scale,135f*scale,55f*scale,alpha*3/4)
+                      }
+
+                      if(night){
+                          glow(820f,115f,105f,Color.argb(120,255,240,175),Color.TRANSPARENT)
+                          p.color=Color.rgb(255,239,170); c.drawCircle(820f,115f,48f,p)
+                          p.color=Color.argb(245,7,43,66); c.drawCircle(842f,96f,50f,p)
+                          p.color=Color.argb(225,255,255,255); for(i in 0..18)c.drawCircle(((i*173)%w).toFloat(),(70+(i*97)%360).toFloat(),if(i%4==0)3.5f else 2.2f,p)
+                      } else {
+                          glow(850f,110f,150f,Color.argb(105,255,224,110),Color.TRANSPARENT)
+                          glow(850f,110f,78f,Color.argb(235,255,224,95),Color.argb(0,255,224,95))
+                          p.color=Color.argb(235,255,220,82); c.drawCircle(850f,110f,42f,p)
+                      }
+
+                      if(wc in 1..3 || wc in 45..48 || wc>=51){
+                          val a=if(wc>=51 || wc in 45..48)185 else 145
+                          when(wc){
+                              1 -> cloud(405f,185f,0.78f,a)
+                              2 -> { cloud(350f,180f,0.88f,a); cloud(700f,205f,0.68f,a-20) }
+                              else -> { cloud(285f,175f,0.92f,a); cloud(650f,190f,0.86f,a); cloud(930f,220f,0.62f,a-25) }
+                          }
+                          if(wc in 45..48){
+                              p.shader=LinearGradient(0f,210f,0f,500f,Color.argb(75,235,242,245),Color.argb(0,235,242,245),Shader.TileMode.CLAMP)
+                              c.drawRect(0f,210f,w.toFloat(),520f,p); p.shader=null
+                          }
+                      }
+                      if(wc>=51 && wc !in 71..77 && wc !in 85..86){
+                          p.color=Color.argb(135,205,230,245);p.strokeWidth=3f
+                          for(x in 150..1080 step 105)c.drawLine(x.toFloat(),300f,(x-18).toFloat(),350f,p)
+                      }
+                      if(snowy){p.color=Color.argb(210,255,255,255); for(i in 0..28){val x=((i*149)%w).toFloat(); val y=(80+(i*83)%420).toFloat(); c.drawCircle(x,y,if(i%3==0)5f else 3.2f,p)}}
                       return b
                   }
 
