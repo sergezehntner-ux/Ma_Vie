@@ -65,8 +65,8 @@ jobs:
                   applicationId = "ch.sergezehntner.mavie"
                   minSdk = 26
                   targetSdk = 35
-                  versionCode = 220
-                  versionName = "0.3.0.11"
+                  versionCode = 221
+                  versionName = "0.3.0.12"
               }
               signingConfigs {
                   create("release") {
@@ -98,6 +98,17 @@ jobs:
           cp meteo-snow-light.jpg android/app/src/main/res/drawable-nodpi/meteo_snow_light.jpg
           cp meteo-snow-medium.jpg android/app/src/main/res/drawable-nodpi/meteo_snow_medium.jpg
           cp meteo-snow-heavy.jpg android/app/src/main/res/drawable-nodpi/meteo_snow_heavy.jpg
+          cp meteo-sun-day.jpg android/app/src/main/res/drawable-nodpi/meteo_sun_day.jpg
+          cp meteo-sun-morning.jpg android/app/src/main/res/drawable-nodpi/meteo_sun_morning.jpg
+          cp meteo-sun-evening.jpg android/app/src/main/res/drawable-nodpi/meteo_sun_evening.jpg
+          cp meteo-cloud-light.jpg android/app/src/main/res/drawable-nodpi/meteo_cloud_light.jpg
+          cp meteo-cloud-medium.jpg android/app/src/main/res/drawable-nodpi/meteo_cloud_medium.jpg
+          cp meteo-cloud-heavy.jpg android/app/src/main/res/drawable-nodpi/meteo_cloud_heavy.jpg
+          cp meteo-rain-light.jpg android/app/src/main/res/drawable-nodpi/meteo_rain_light.jpg
+          cp meteo-rain-heavy.jpg android/app/src/main/res/drawable-nodpi/meteo_rain_heavy.jpg
+          cp meteo-storm.jpg android/app/src/main/res/drawable-nodpi/meteo_storm.jpg
+          cp meteo-night-stars.jpg android/app/src/main/res/drawable-nodpi/meteo_night_stars.jpg
+          cp meteo-night-moon.jpg android/app/src/main/res/drawable-nodpi/meteo_night_moon.jpg
           mkdir -p android/app/src/main/res/raw
           cp meteo-suisse-fictive.json android/app/src/main/res/raw/meteo_suisse_fictive.json
 
@@ -598,94 +609,41 @@ jobs:
                   private fun sceneBitmap(context:Context,code:Int,placeName:String,lat:Double?,lon:Double?):Bitmap{
                       val w=1200; val h=700; val b=Bitmap.createBitmap(w,h,Bitmap.Config.ARGB_8888); val c=Canvas(b)
                       val night=code>=1000; val wc=code%1000
-                      // Météo Suisse fictive: le widget lit exactement le même livre de recettes JSON que Ma Vie.
                       val meteoRecipe=try{JSONObject(context.resources.openRawResource(R.raw.meteo_suisse_fictive).bufferedReader().use{it.readText()})}catch(_:Exception){JSONObject()}
                       fun groupFor(code:Int):String{
                           val groups=meteoRecipe.optJSONObject("wmo") ?: return "cloudy"
-                          for(k in groups.keys()){
-                              val a=groups.optJSONArray(k) ?: continue
-                              for(i in 0 until a.length()) if(a.optInt(i,-999)==code) return k
-                          }
+                          for(k in groups.keys()){ val a=groups.optJSONArray(k) ?: continue; for(i in 0 until a.length()) if(a.optInt(i,-999)==code) return k }
                           return "cloudy"
                       }
                       fun intensityFor(group:String,code:Int):String = meteoRecipe.optJSONObject("intensity")?.optJSONObject(group)?.optString(code.toString(),"medium") ?: "medium"
-                      val meteoGroup=groupFor(wc); val meteoIntensity=intensityFor(meteoGroup,wc)
-                      // Prefer the actual coordinates: reverse geocoding can be unavailable when a widget
-                      // is first added.  The 3.5 km fallback covers the Ursy home area without turning
-                      // every nearby trip into the home photograph.
+                      val group=groupFor(wc); val intensity=intensityFor(group,wc)
                       val nearUrsy=lat!=null && lon!=null && distanceKm(lat,lon,46.634729,6.834161)<=3.5
                       val isUrsy=placeName.equals("Ursy",ignoreCase=true) || nearUrsy
-                      val snowy=meteoGroup=="snow"
-                      val photo=if(isUrsy) BitmapFactory.decodeResource(context.resources,if(snowy)R.drawable.widget_ursy_snow else R.drawable.widget_ursy_green) else null
-                      if(photo!=null){
-                          val scale=maxOf(w.toFloat()/photo.width,h.toFloat()/photo.height)
-                          val dw=photo.width*scale; val dh=photo.height*scale
-                          val dst=RectF(w-dw,(h-dh)/2f,w.toFloat(),(h+dh)/2f)
-                          c.drawBitmap(photo,null,dst,Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG))
-                          c.drawRect(0f,0f,w.toFloat(),h.toFloat(),Paint().apply{color=Color.argb(if(night)145 else 28,0,28,48)})
-                      } else {
-                          val top=if(night)Color.rgb(5,44,69) else Color.rgb(54,150,218); val bot=if(night)Color.rgb(8,91,111) else Color.rgb(174,218,239)
-                          c.drawRect(0f,0f,w.toFloat(),h.toFloat(),Paint().apply{shader=LinearGradient(0f,0f,0f,h.toFloat(),top,bot,Shader.TileMode.CLAMP)})
+                      fun cover(res:Int,alpha:Int=255,blend:Boolean=false){
+                          val im=BitmapFactory.decodeResource(context.resources,res) ?: return
+                          val sc=maxOf(w.toFloat()/im.width,h.toFloat()/im.height); val dw=im.width*sc; val dh=im.height*sc
+                          val dst=RectF((w-dw)/2f,(h-dh)/2f,(w+dw)/2f,(h+dh)/2f)
+                          val paint=Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply{this.alpha=alpha;if(blend)xfermode=PorterDuffXfermode(PorterDuff.Mode.SCREEN)}
+                          c.drawBitmap(im,null,dst,paint); paint.xfermode=null
                       }
-                      // Phénomènes photographiques, composés au-dessus du lieu avec la même intensité que Ma Vie.
-                      fun overlay(res:Int,alpha:Int){
-                          val ov=BitmapFactory.decodeResource(context.resources,res) ?: return
-                          val paint=Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply{this.alpha=alpha}
-                          c.drawBitmap(ov,null,RectF(0f,0f,w.toFloat(),h.toFloat()),paint)
+                      // Couche 1 : lieu réel. Pas de météo dessinée.
+                      if(isUrsy) cover(if(group=="snow")R.drawable.widget_ursy_snow else R.drawable.widget_ursy_green)
+                      else c.drawColor(if(night)Color.rgb(7,31,48) else Color.rgb(105,166,198))
+                      // Couche 2 : moment/ciel photographique.
+                      if(night) cover(R.drawable.meteo_night_stars,118,true)
+                      else when(group){
+                          "clear" -> cover(R.drawable.meteo_sun_day,48,true)
+                          "light_cloud" -> cover(R.drawable.meteo_cloud_light,72,true)
+                          "cloudy" -> cover(if(wc==3)R.drawable.meteo_cloud_heavy else R.drawable.meteo_cloud_medium,if(wc==3)118 else 88,true)
                       }
-                      if(meteoGroup=="fog") overlay(if(meteoIntensity=="dense")R.drawable.meteo_fog_dense else R.drawable.meteo_fog_light,if(meteoIntensity=="dense")168 else 86)
-                      if(meteoGroup=="snow") overlay(when(meteoIntensity){"heavy"->R.drawable.meteo_snow_heavy;"medium"->R.drawable.meteo_snow_medium;else->R.drawable.meteo_snow_light},when(meteoIntensity){"heavy"->168;"medium"->132;else->102})
-                      val p=Paint(Paint.ANTI_ALIAS_FLAG)
-
-                      // Weather is atmospheric, not a set of geometric stickers.
-                      // Soft radial gradients let the light/clouds blend into the real photograph.
-                      fun glow(cx:Float,cy:Float,r:Float,inner:Int,outer:Int){
-                          p.shader=RadialGradient(cx,cy,r,inner,outer,Shader.TileMode.CLAMP)
-                          c.drawCircle(cx,cy,r,p); p.shader=null
+                      // Couche 3 : phénomène photographique. Le lieu recule pour pluie/brouillard/orage/neige.
+                      when(group){
+                          "fog" -> cover(if(intensity=="dense")R.drawable.meteo_fog_dense else R.drawable.meteo_fog_light,if(intensity=="dense")194 else 126,true)
+                          "drizzle","rain" -> cover(if(intensity=="heavy")R.drawable.meteo_rain_heavy else R.drawable.meteo_rain_light,if(intensity=="heavy")184 else 126,false)
+                          "snow" -> cover(when(intensity){"heavy"->R.drawable.meteo_snow_heavy;"medium"->R.drawable.meteo_snow_medium;else->R.drawable.meteo_snow_light},when(intensity){"heavy"->194;"medium"->158;else->126},true)
+                          "storm" -> cover(R.drawable.meteo_storm,190,false)
                       }
-                      fun softOval(cx:Float,cy:Float,rx:Float,ry:Float,alpha:Int){
-                          c.save(); c.scale(1f,ry/rx,cx,cy)
-                          p.shader=RadialGradient(cx,cy,rx,Color.argb(alpha,246,249,252),Color.argb(0,246,249,252),Shader.TileMode.CLAMP)
-                          c.drawCircle(cx,cy,rx,p); p.shader=null; c.restore()
-                      }
-                      fun cloud(cx:Float,cy:Float,scale:Float,alpha:Int){
-                          // diffuse base + irregular lobes; deliberately asymmetric
-                          softOval(cx,cy+18f*scale,150f*scale,48f*scale,alpha*2/3)
-                          softOval(cx-82f*scale,cy+5f*scale,76f*scale,45f*scale,alpha*3/4)
-                          softOval(cx-28f*scale,cy-24f*scale,94f*scale,63f*scale,alpha)
-                          softOval(cx+48f*scale,cy-38f*scale,108f*scale,72f*scale,alpha)
-                          softOval(cx+112f*scale,cy+2f*scale,82f*scale,50f*scale,alpha*4/5)
-                          softOval(cx+35f*scale,cy+12f*scale,135f*scale,55f*scale,alpha*3/4)
-                      }
-
-                      if(night){
-                          glow(820f,115f,105f,Color.argb(120,255,240,175),Color.TRANSPARENT)
-                          p.color=Color.rgb(255,239,170); c.drawCircle(820f,115f,48f,p)
-                          p.color=Color.argb(245,7,43,66); c.drawCircle(842f,96f,50f,p)
-                          p.color=Color.argb(225,255,255,255); for(i in 0..18)c.drawCircle(((i*173)%w).toFloat(),(70+(i*97)%360).toFloat(),if(i%4==0)3.5f else 2.2f,p)
-                      } else {
-                          glow(850f,110f,150f,Color.argb(105,255,224,110),Color.TRANSPARENT)
-                          glow(850f,110f,78f,Color.argb(235,255,224,95),Color.argb(0,255,224,95))
-                          p.color=Color.argb(235,255,220,82); c.drawCircle(850f,110f,42f,p)
-                      }
-
-                      if(meteoGroup!="clear"){
-                          val a=if(meteoGroup in listOf("fog","drizzle","rain","snow","storm"))185 else 145
-                          when(wc){
-                              1 -> cloud(405f,185f,0.78f,a)
-                              2 -> { cloud(350f,180f,0.88f,a); cloud(700f,205f,0.68f,a-20) }
-                              else -> { cloud(285f,175f,0.92f,a); cloud(650f,190f,0.86f,a); cloud(930f,220f,0.62f,a-25) }
-                          }
-                          if(meteoGroup=="fog"){
-                              p.shader=LinearGradient(0f,210f,0f,500f,Color.argb(75,235,242,245),Color.argb(0,235,242,245),Shader.TileMode.CLAMP)
-                              c.drawRect(0f,210f,w.toFloat(),520f,p); p.shader=null
-                          }
-                      }
-                      if(meteoGroup=="drizzle" || meteoGroup=="rain"){
-                          p.color=Color.argb(135,205,230,245);p.strokeWidth=3f
-                          for(x in 150..1080 step 105)c.drawLine(x.toFloat(),300f,(x-18).toFloat(),350f,p)
-                      }
-                      if(snowy){p.color=Color.argb(210,255,255,255); for(i in 0..28){val x=((i*149)%w).toFloat(); val y=(80+(i*83)%420).toFloat(); c.drawCircle(x,y,if(i%3==0)5f else 3.2f,p)}}
+                      if(night) c.drawRect(0f,0f,w.toFloat(),h.toFloat(),Paint().apply{color=Color.argb(48,0,12,28)})
                       return b
                   }
 
@@ -798,5 +756,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Ma_Vie_Android_v0.3.0.6_Widget_PhotoLieu
+          name: Ma_Vie_Android_v0.3.0.12_Meteo_Suisse_photographique
           path: android/app/build/outputs/apk/release/app-release.apk
