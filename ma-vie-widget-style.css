@@ -349,3 +349,19 @@ body[data-weather="cloud"] .c1{right:5%!important;top:15%!important;transform:sc
 body[data-weather="cloud"] .c2{left:12%!important;top:30%!important;transform:scale(.88,.80) rotate(3deg)!important}
 body[data-weather="cloud"] .c3{left:49%!important;top:22%!important;transform:scale(.64,.72) rotate(-5deg)!important}
 body[data-weather="cloud"] .c4{right:29%!important;top:35%!important;transform:scale(.52,.68) rotate(4deg)!important}
+
+/* v0.3.15 — Météo Suisse fictive : même ordre de couches partout. */
+.weather-effect{position:absolute;inset:0;z-index:3;pointer-events:none;background-position:center;background-size:cover;background-repeat:no-repeat;opacity:0}
+body[data-period="morning"] .weather-scene{filter:saturate(.96) brightness(.98) sepia(.05)}
+body[data-period="day"] .weather-scene{filter:none}
+body[data-period="evening"] .weather-scene{filter:saturate(1.08) brightness(.90) sepia(.16)}
+body[data-period="night"] .weather-scene{filter:saturate(.82) brightness(.56) hue-rotate(4deg)}
+body[data-weather="fog"] .weather-effect{background-image:url('meteo-fog-light.jpg');opacity:.34;mix-blend-mode:screen}
+body[data-weather="fog"][data-weather-intensity="dense"] .weather-effect{background-image:url('meteo-fog-dense.jpg');opacity:.66}
+body[data-weather="snow"] .weather-effect{background-image:url('meteo-snow-light.jpg');opacity:.40;mix-blend-mode:screen}
+body[data-weather="snow"][data-weather-intensity="medium"] .weather-effect{background-image:url('meteo-snow-medium.jpg');opacity:.52}
+body[data-weather="snow"][data-weather-intensity="heavy"] .weather-effect{background-image:url('meteo-snow-heavy.jpg');opacity:.66}
+/* Le phénomène domine progressivement le lieu, jamais l'inverse. */
+body[data-weather="fog"][data-weather-intensity="dense"] .celestial,
+body[data-weather="rain"][data-weather-intensity="heavy"] .celestial,
+body[data-weather="snow"][data-weather-intensity="heavy"] .celestial{opacity:.12!important}
