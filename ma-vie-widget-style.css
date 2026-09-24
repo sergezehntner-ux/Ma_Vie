@@ -365,3 +365,36 @@ body[data-weather="snow"][data-weather-intensity="heavy"] .weather-effect{backgr
 body[data-weather="fog"][data-weather-intensity="dense"] .celestial,
 body[data-weather="rain"][data-weather-intensity="heavy"] .celestial,
 body[data-weather="snow"][data-weather-intensity="heavy"] .celestial{opacity:.12!important}
+
+/* v0.3.16 — Météo Suisse photographique.
+   Aucune forme météo dessinée : le lieu + des couches photographiques uniquement. */
+.weather-scene .celestial,.weather-scene .cloud,.weather-scene .rain,.weather-scene .horizon{display:none!important}
+.weather-scene{filter:none!important;background-image:url('ursy-green.jpg')!important;background-position:right center!important}
+body[data-weather="snow"] .weather-scene{background-image:url('ursy-snow.jpg')!important}
+.weather-effect{display:block!important;inset:0!important;opacity:0;background-size:cover!important;background-position:center!important;background-repeat:no-repeat!important;mix-blend-mode:normal!important}
+/* Clair : le lieu reste devant, le ciel photographique est une atmosphère légère. */
+body[data-weather="clear"] .weather-effect,body[data-weather="sun"] .weather-effect{background-image:url('meteo-sun-day.jpg');opacity:.20}
+body[data-weather="clear"][data-period="morning"] .weather-effect,body[data-weather="sun"][data-period="morning"] .weather-effect{background-image:url('meteo-sun-morning.jpg');opacity:.25}
+body[data-weather="clear"][data-period="evening"] .weather-effect,body[data-weather="sun"][data-period="evening"] .weather-effect{background-image:url('meteo-sun-evening.jpg');opacity:.32}
+/* Nuages photographiques. */
+body[data-weather="cloud"] .weather-effect{background-image:url('meteo-cloud-medium.jpg');opacity:.34;mix-blend-mode:screen!important}
+body[data-weather="cloud"][data-weather-group="light_cloud"] .weather-effect{background-image:url('meteo-cloud-light.jpg');opacity:.28}
+body[data-weather="cloud"][data-weather-group="cloudy"][data-weather-intensity="heavy"] .weather-effect{background-image:url('meteo-cloud-heavy.jpg');opacity:.48}
+/* Pluie / orage : le phénomène passe devant le lieu. */
+body[data-weather="rain"] .weather-effect{background-image:url('meteo-rain-light.jpg');opacity:.45}
+body[data-weather="rain"][data-weather-intensity="heavy"] .weather-effect{background-image:url('meteo-rain-heavy.jpg');opacity:.68}
+body[data-weather="storm"] .weather-effect{background-image:url('meteo-storm.jpg');opacity:.70}
+/* Brouillard / neige. */
+body[data-weather="fog"] .weather-effect{background-image:url('meteo-fog-light.jpg');opacity:.48}
+body[data-weather="fog"][data-weather-intensity="dense"] .weather-effect{background-image:url('meteo-fog-dense.jpg');opacity:.76}
+body[data-weather="snow"] .weather-effect{background-image:url('meteo-snow-light.jpg');opacity:.48}
+body[data-weather="snow"][data-weather-intensity="medium"] .weather-effect{background-image:url('meteo-snow-medium.jpg');opacity:.62}
+body[data-weather="snow"][data-weather-intensity="heavy"] .weather-effect{background-image:url('meteo-snow-heavy.jpg');opacity:.76}
+/* Nuit = trois couches : lieu + ciel étoilé + lune/condition. */
+body[data-period="night"] .weather-scene{filter:brightness(.52) saturate(.78)!important}
+body[data-period="night"] .weather-effect{background-image:url('meteo-night-stars.jpg'),url('meteo-night-moon.jpg');background-size:cover,cover!important;background-position:center,center!important;opacity:.46;mix-blend-mode:screen!important}
+body[data-period="night"][data-weather="rain"] .weather-effect{background-image:url('meteo-rain-heavy.jpg');opacity:.55;mix-blend-mode:normal!important}
+body[data-period="night"][data-weather="fog"] .weather-effect{background-image:url('meteo-fog-dense.jpg');opacity:.62;mix-blend-mode:screen!important}
+body[data-period="night"][data-weather="snow"] .weather-effect{background-image:url('meteo-snow-medium.jpg');opacity:.64;mix-blend-mode:screen!important}
+body[data-period="night"][data-weather="storm"] .weather-effect{background-image:url('meteo-storm.jpg');opacity:.68;mix-blend-mode:normal!important}
+.weather-scene:after{content:""!important;position:absolute!important;inset:0!important;z-index:4!important;pointer-events:none!important;background:linear-gradient(180deg,rgba(0,15,24,.02),rgba(0,12,18,.08))!important}

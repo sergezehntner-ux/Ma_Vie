@@ -12,7 +12,7 @@
   const intensityFor = (group,code) => (recipe.intensity[group]||{})[code] || (group==='clear'||group==='light_cloud'?'none':'medium');
   function apply(code, hour=(new Date()).getHours()){
     const group=groupFor(code), period=periodFor(hour), intensity=intensityFor(group,+code);
-    const weather = group==='light_cloud'||group==='cloudy'?'cloud':group==='drizzle'?'rain':group;
+    const weather = group==='clear'?'clear':group==='light_cloud'||group==='cloudy'?'cloud':group==='drizzle'?'rain':group;
     document.body.dataset.period=period;
     document.body.dataset.weather=weather;
     document.body.dataset.weatherGroup=group;
