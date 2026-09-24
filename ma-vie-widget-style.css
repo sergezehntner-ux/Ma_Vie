@@ -76,3 +76,33 @@ body[data-weather="snow"] .weather-scene{
   .grid>.card{border-radius:13px!important}
   .permanent-dock{border-radius:13px!important}
 }
+
+/* v0.3.10 — météo atmosphérique identique au langage du widget */
+body:not([data-period="night"]) .celestial{
+  width:72px!important;height:72px!important;
+  background:#ffd84f!important;
+  box-shadow:0 0 18px 8px rgba(255,216,79,.30),0 0 38px 15px rgba(255,216,79,.13)!important;
+  opacity:.96;
+}
+body[data-weather="cloud"]:not([data-period="night"]) .celestial{opacity:.92!important}
+.weather-scene .cloud{
+  width:190px!important;height:48px!important;
+  border-radius:50%!important;
+  background:radial-gradient(ellipse at 50% 58%,rgba(255,255,255,.78) 0 34%,rgba(245,249,250,.58) 50%,rgba(235,244,247,.22) 69%,transparent 78%)!important;
+  box-shadow:none!important;
+  filter:blur(8px)!important;
+}
+.weather-scene .cloud:before,.weather-scene .cloud:after{display:none!important}
+body[data-weather="cloud"] .weather-scene .cloud,
+body[data-weather="fog"] .weather-scene .cloud{opacity:.78!important}
+body[data-weather="rain"] .weather-scene .cloud,
+body[data-weather="snow"] .weather-scene .cloud{opacity:.82!important}
+body[data-weather="storm"] .weather-scene .cloud{opacity:.88!important;background:radial-gradient(ellipse at 50% 58%,rgba(130,148,154,.82) 0 35%,rgba(102,124,132,.56) 53%,rgba(72,98,108,.18) 72%,transparent 80%)!important}
+body[data-weather="cloud"] .c1{right:7%!important;top:12%!important;transform:scale(1.05)!important}
+body[data-weather="cloud"] .c2{left:14%!important;top:27%!important;transform:scale(.90)!important}
+body[data-weather="cloud"] .c3{left:47%!important;top:20%!important;transform:scale(.72)!important}
+body[data-weather="cloud"] .c4{right:28%!important;top:35%!important;transform:scale(.62)!important}
+
+/* Le dock fixe réserve désormais sa hauteur réelle : aucune carte ne peut passer dessous. */
+.app-shell{padding-bottom:calc(var(--mv-dock-space,126px) + 12px)!important}
+@media(max-width:699px){.app-shell{padding-bottom:calc(var(--mv-dock-space,106px) + 8px)!important}}
