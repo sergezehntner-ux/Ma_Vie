@@ -65,8 +65,8 @@ jobs:
                   applicationId = "ch.sergezehntner.mavie"
                   minSdk = 26
                   targetSdk = 35
-                  versionCode = 215
-                  versionName = "0.3.0.6"
+                  versionCode = 218
+                  versionName = "0.3.0.9"
               }
               signingConfigs {
                   create("release") {
@@ -113,6 +113,7 @@ jobs:
                   <receiver android:name=".MaVieWidgetProvider" android:exported="true">
                       <intent-filter>
                           <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+                          <action android:name="android.intent.action.USER_PRESENT"/>
                       </intent-filter>
                       <meta-data android:name="android.appwidget.provider" android:resource="@xml/ma_vie_widget_info"/>
                   </receiver>
@@ -468,6 +469,7 @@ jobs:
           package ch.sergezehntner.mavie
 
           import android.app.PendingIntent
+          import android.app.AlarmManager
           import android.appwidget.AppWidgetManager
           import android.appwidget.AppWidgetProvider
           import android.content.ComponentName
@@ -485,15 +487,36 @@ jobs:
           import kotlin.concurrent.thread
 
           class MaVieWidgetProvider : AppWidgetProvider() {
-              override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) = refresh(context)
-              override fun onEnabled(context: Context) = refresh(context)
+              override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) = refresh(context,0)
+              override fun onEnabled(context: Context) = refresh(context,0)
+              override fun onReceive(context: Context, intent: Intent) {
+                  super.onReceive(context,intent)
+                  if(intent.action==Intent.ACTION_USER_PRESENT) refresh(context,0)
+                  if(intent.action==ACTION_RETRY) refresh(context,intent.getIntExtra("attempt",1))
+              }
 
               companion object {
-                  fun refresh(context: Context) { thread { try { update(context) } catch (_: Exception) {} } }
+                  private const val ACTION_RETRY="ch.sergezehntner.mavie.WIDGET_RETRY"
+                  fun refresh(context: Context, attempt:Int=0) {
+                      thread {
+                          try {
+                              val complete=update(context)
+                              if(!complete && attempt<3) scheduleRetry(context,attempt+1)
+                          } catch (_: Exception) { if(attempt<3) scheduleRetry(context,attempt+1) }
+                      }
+                  }
 
-                  private fun update(context: Context) {
+                  private fun scheduleRetry(context:Context,attempt:Int){
+                      val delay=when(attempt){1->5_000L;2->20_000L;else->60_000L}
+                      val i=Intent(context,MaVieWidgetProvider::class.java).setAction(ACTION_RETRY).putExtra("attempt",attempt)
+                      val pi=PendingIntent.getBroadcast(context,200+attempt,i,PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+                      val alarm=context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                      alarm.set(AlarmManager.ELAPSED_REALTIME_WAKEUP,android.os.SystemClock.elapsedRealtime()+delay,pi)
+                  }
+
+                  private fun update(context: Context):Boolean {
                       val mgr=AppWidgetManager.getInstance(context)
-                      val ids=mgr.getAppWidgetIds(ComponentName(context,MaVieWidgetProvider::class.java)); if(ids.isEmpty()) return
+                      val ids=mgr.getAppWidgetIds(ComponentName(context,MaVieWidgetProvider::class.java)); if(ids.isEmpty()) return true
                       val v=RemoteViews(context.packageName,R.layout.ma_vie_widget)
                       val liveLocation=lastLocation(context)
                       val prefs=context.getSharedPreferences("ma_vie_widget",Context.MODE_PRIVATE)
@@ -522,6 +545,10 @@ jobs:
                       val cal=PendingIntent.getActivity(context,11,Intent(Intent.ACTION_VIEW,calUri),PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
                       v.setOnClickPendingIntent(R.id.card_now,cal)
                       ids.forEach{mgr.updateAppWidget(it,v)}
+                      val weatherOk=weather.first!="--°"
+                      val libreOk=libre?.optBoolean("ok")==true
+                      val enyaqOk=enyaq?.optBoolean("ok")==true
+                      return weatherOk && libreOk && enyaqOk
                   }
 
                   private fun lastLocation(c:Context):Pair<Double?,Double?> { return try{
