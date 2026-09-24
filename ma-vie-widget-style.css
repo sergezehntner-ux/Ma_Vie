@@ -206,3 +206,72 @@ body[data-weather="cloud"] .c1{right:4%!important;top:13%!important;transform:sc
 body[data-weather="cloud"] .c2{left:10%!important;top:29%!important;transform:scale(.98) rotate(3deg)!important}
 body[data-weather="cloud"] .c3{left:47%!important;top:20%!important;transform:scale(.73) rotate(-4deg)!important}
 body[data-weather="cloud"] .c4{right:27%!important;top:34%!important;transform:scale(.60) rotate(5deg)!important}
+
+/* v0.3.13 — Atmosphère+ : verre plus léger, soleil vivant, nuages vaporeux */
+:root{
+  --mv-glass:rgba(4,22,29,.35);
+  --mv-glass-soft:rgba(4,22,29,.28);
+}
+
+/* Les cartes laissent davantage respirer la photo, sans perdre la lisibilité. */
+.card,.permanent-dock{
+  backdrop-filter:blur(8px) saturate(1.06)!important;
+  -webkit-backdrop-filter:blur(8px) saturate(1.06)!important;
+}
+
+/* Soleil : halo plus ample et rayons fins, irréguliers visuellement. */
+body:not([data-period="night"]) .celestial{
+  width:66px!important;height:66px!important;
+  background:radial-gradient(circle at 42% 38%,#fffde3 0 6%,#fff3a9 15%,#ffe36d 38%,#ffd24a 69%,#f5c23a 100%)!important;
+  box-shadow:
+    0 0 16px 9px rgba(255,242,173,.58),
+    0 0 44px 24px rgba(255,220,88,.36),
+    0 0 92px 48px rgba(255,203,50,.20),
+    0 0 168px 84px rgba(255,190,28,.09)!important;
+}
+body:not([data-period="night"]) .celestial:before{
+  width:330px!important;height:330px!important;
+  background:repeating-conic-gradient(from 5deg,
+    rgba(255,244,190,.32) 0deg .75deg,
+    rgba(255,224,112,.13) .75deg 1.8deg,
+    transparent 1.8deg 11.5deg)!important;
+  -webkit-mask-image:radial-gradient(circle,transparent 0 20%,rgba(0,0,0,.98) 33%,rgba(0,0,0,.58) 55%,transparent 79%)!important;
+  mask-image:radial-gradient(circle,transparent 0 20%,rgba(0,0,0,.98) 33%,rgba(0,0,0,.58) 55%,transparent 79%)!important;
+  filter:blur(2px)!important;opacity:.92!important;
+}
+body:not([data-period="night"]) .celestial:after{
+  width:220px!important;height:220px!important;
+  background:radial-gradient(circle,rgba(255,246,190,.24) 0 24%,rgba(255,224,105,.13) 43%,rgba(255,207,62,.05) 58%,transparent 73%)!important;
+  filter:blur(10px)!important;
+}
+
+/* Nuages : contours moins géométriques, masses étirées et bords fondus. */
+.weather-scene .cloud{
+  width:205px!important;height:46px!important;
+  border-radius:52% 48% 56% 44%!important;
+  background:
+    radial-gradient(ellipse at 19% 64%,rgba(255,255,255,.42) 0 16%,transparent 47%),
+    radial-gradient(ellipse at 43% 42%,rgba(255,255,255,.70) 0 25%,rgba(247,251,252,.25) 53%,transparent 72%),
+    radial-gradient(ellipse at 70% 57%,rgba(249,252,253,.54) 0 23%,transparent 60%),
+    linear-gradient(180deg,rgba(255,255,255,.52),rgba(231,242,247,.19) 72%,transparent)!important;
+  box-shadow:0 10px 30px rgba(225,239,245,.10)!important;
+  filter:blur(5.5px)!important;
+}
+.weather-scene .cloud:before{
+  width:98px!important;height:58px!important;left:28px!important;bottom:5px!important;
+  background:radial-gradient(ellipse at 48% 48%,rgba(255,255,255,.62) 0 35%,rgba(239,247,250,.22) 62%,transparent 80%)!important;
+  transform:rotate(-7deg)!important;
+}
+.weather-scene .cloud:after{
+  width:118px!important;height:52px!important;right:11px!important;bottom:4px!important;
+  background:radial-gradient(ellipse at 48% 50%,rgba(255,255,255,.55) 0 34%,rgba(236,246,249,.18) 64%,transparent 82%)!important;
+  transform:rotate(5deg)!important;
+}
+body[data-weather="cloud"] .weather-scene .cloud,
+body[data-weather="fog"] .weather-scene .cloud{opacity:.66!important}
+body[data-weather="rain"] .weather-scene .cloud,
+body[data-weather="snow"] .weather-scene .cloud{opacity:.73!important}
+body[data-weather="cloud"] .c1{right:3%!important;top:13%!important;transform:scale(1.20,.90) rotate(-4deg)!important}
+body[data-weather="cloud"] .c2{left:9%!important;top:29%!important;transform:scale(1.02,.84) rotate(3deg)!important}
+body[data-weather="cloud"] .c3{left:46%!important;top:20%!important;transform:scale(.76,.78) rotate(-5deg)!important}
+body[data-weather="cloud"] .c4{right:26%!important;top:34%!important;transform:scale(.64,.74) rotate(4deg)!important}
