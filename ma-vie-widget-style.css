@@ -503,3 +503,42 @@ body[data-period="night"][data-weather="fog"] .weather-effect{background-image:u
 body[data-period="night"][data-weather="snow"] .weather-effect{background-image:url('meteo-snow-medium.jpg');opacity:.52;mix-blend-mode:screen!important}
 body[data-period="night"][data-weather="storm"] .weather-effect{background-image:url('meteo-storm.jpg');opacity:.58;mix-blend-mode:normal!important}
 .weather-scene:after{background:linear-gradient(180deg,rgba(0,18,28,0),rgba(0,12,18,.055))!important}
+
+/* v0.3.21 — Dernier essai : météo dans le ciel uniquement.
+   Le paysage d'Ursy reste intact. La couche photo météo est masquée
+   progressivement avant l'horizon pour ne plus laver champs et montagnes. */
+.weather-effect{
+  inset:0!important;
+  background-size:cover!important;
+  background-position:center center!important;
+  -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 34%,rgba(0,0,0,.94) 40%,rgba(0,0,0,.55) 47%,transparent 56%)!important;
+  mask-image:linear-gradient(to bottom,#000 0%,#000 34%,rgba(0,0,0,.94) 40%,rgba(0,0,0,.55) 47%,transparent 56%)!important;
+}
+/* Le temps actuel partiellement nuageux doit réellement dessiner le ciel. */
+body[data-weather="cloud"] .weather-effect{
+  background-image:url('meteo-cloud-medium.jpg');
+  opacity:.52!important;
+  mix-blend-mode:screen!important;
+}
+body[data-weather="cloud"][data-weather-group="light_cloud"] .weather-effect{
+  background-image:url('meteo-cloud-light.jpg');
+  opacity:.48!important;
+  mix-blend-mode:screen!important;
+}
+body[data-weather="cloud"][data-weather-intensity="heavy"] .weather-effect{
+  background-image:url('meteo-cloud-heavy.jpg');
+  opacity:.62!important;
+  mix-blend-mode:soft-light!important;
+}
+/* Clair : seulement une touche de lumière dans le ciel. */
+body[data-weather="clear"] .weather-effect,
+body[data-weather="sun"] .weather-effect{opacity:.18!important}
+/* Les phénomènes qui existent aussi devant le paysage ne sont pas masqués. */
+body[data-weather="rain"] .weather-effect,
+body[data-weather="storm"] .weather-effect,
+body[data-weather="fog"] .weather-effect,
+body[data-weather="snow"] .weather-effect,
+body[data-period="night"] .weather-effect{
+  -webkit-mask-image:none!important;
+  mask-image:none!important;
+}
