@@ -515,6 +515,9 @@ jobs:
           import java.net.URL
           import java.text.SimpleDateFormat
           import java.util.*
+          import java.time.Instant
+          import java.time.ZoneId
+          import java.time.ZonedDateTime
           import kotlin.concurrent.thread
 
           class MaVieWidgetProvider : AppWidgetProvider() {
@@ -555,14 +558,17 @@ jobs:
                       }
                       val lat=liveLocation.first ?: if(prefs.contains("last_lat")) java.lang.Double.longBitsToDouble(prefs.getLong("last_lat",0L)) else null
                       val lon=liveLocation.second ?: if(prefs.contains("last_lon")) java.lang.Double.longBitsToDouble(prefs.getLong("last_lon",0L)) else null
-                      val weather=weather(lat,lon)
-                      val placeName=place(context,lat,lon)
+
+                      // Etape 1 : une seule verite de contexte = GPS + fuseau + date/heure locale du lieu.
+                      val geo=geoContext(lat,lon,prefs)
+                      val weather=weather(geo.lat,geo.lon)
+                      val placeName=place(context,geo.lat,geo.lon)
                       if(placeName!="Ma Vie") prefs.edit().putString("last_place",placeName).apply()
                       val shownPlace=if(placeName=="Ma Vie") prefs.getString("last_place","Ma Vie") ?: "Ma Vie" else placeName
                       val ev=events(context)
                       val libre=try{JSONObject(LibreBridge(context,null).getData())}catch(_:Exception){null}
                       val enyaq=try{JSONObject(EnyaqBridge(context,null).getData())}catch(_:Exception){null}
-                      val bg=sceneBitmap(context,weather.second,shownPlace,lat,lon)
+                      val bg=sceneBitmap(context,weather.second,shownPlace,geo.lat,geo.lon)
                       val app=PendingIntent.getActivity(context,10,Intent(context,MainActivity::class.java),PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
                       val calUri=CalendarContract.CONTENT_URI.buildUpon().appendPath("time").appendPath(System.currentTimeMillis().toString()).build()
                       val cal=PendingIntent.getActivity(context,11,Intent(Intent.ACTION_VIEW,calUri),PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
@@ -588,6 +594,23 @@ jobs:
                       val l=lm.getProviders(true).mapNotNull{try{lm.getLastKnownLocation(it)}catch(_:SecurityException){null}}.maxByOrNull{it.time}
                       Pair(l?.latitude,l?.longitude)
                   }catch(_:Exception){Pair(null,null)} }
+
+                  data class GeoContext(val lat:Double?,val lon:Double?,val timezone:String,val localNow:ZonedDateTime)
+
+                  private fun geoContext(lat:Double?,lon:Double?,prefs:android.content.SharedPreferences):GeoContext {
+                      var zoneName=prefs.getString("last_timezone",null)
+                      if(lat!=null && lon!=null){
+                          try{
+                              val raw=URL("https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon&timezone=auto&forecast_days=1").readText()
+                              val z=JSONObject(raw).optString("timezone","").trim()
+                              if(z.isNotEmpty()){ ZoneId.of(z); zoneName=z; prefs.edit().putString("last_timezone",z).apply() }
+                          }catch(_:Exception){}
+                      }
+                      val safeZone=try{ZoneId.of(zoneName ?: TimeZone.getDefault().id)}catch(_:Exception){ZoneId.systemDefault()}
+                      val now=ZonedDateTime.ofInstant(Instant.ofEpochMilli(System.currentTimeMillis()),safeZone)
+                      prefs.edit().putString("geo_timezone",safeZone.id).putString("geo_local_date",now.toLocalDate().toString()).putString("geo_local_time",now.toLocalTime().withNano(0).toString()).putLong("geo_context_epoch_ms",System.currentTimeMillis()).apply()
+                      return GeoContext(lat,lon,safeZone.id,now)
+                  }
 
                   private fun place(c:Context,lat:Double?,lon:Double?):String { if(lat==null||lon==null)return "Ma Vie"; return try{
                       @Suppress("DEPRECATION") val a=Geocoder(c,Locale.getDefault()).getFromLocation(lat,lon,1)?.firstOrNull()
