@@ -646,15 +646,18 @@ jobs:
                           placeName.equals("Ursy",ignoreCase=true) || (lat!=null && lon!=null && distanceKm(lat,lon,46.634729,6.834161)<=3.5) -> R.drawable.widget_ursy_green
                           else -> null
                       }
-                      fun cover(res:Int,alpha:Int=255,blend:Boolean=false){
+                      fun cover(res:Int,alpha:Int=255,blend:Boolean=false,zoom:Float=1f,posY:Float=.5f){
                           val im=BitmapFactory.decodeResource(context.resources,res) ?: return
-                          val sc=maxOf(w.toFloat()/im.width,h.toFloat()/im.height); val dw=im.width*sc; val dh=im.height*sc
-                          val dst=RectF((w-dw)/2f,(h-dh)/2f,(w+dw)/2f,(h+dh)/2f)
+                          val sc=maxOf(w.toFloat()/im.width,h.toFloat()/im.height)*zoom; val dw=im.width*sc; val dh=im.height*sc
+                          val left=(w-dw)/2f
+                          val top=(h-dh)*posY
+                          val dst=RectF(left,top,left+dw,top+dh)
                           val paint=Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply{this.alpha=alpha;if(blend)xfermode=PorterDuffXfermode(PorterDuff.Mode.SCREEN)}
                           c.drawBitmap(im,null,dst,paint); paint.xfermode=null
                       }
-                      // Couche 1 : lieu réel. Elle ne dépend JAMAIS du code météo.
-                      if(placePhotoRes!=null) cover(placePhotoRes)
+                      // Couche 1 : lieu réel. Même cadrage que Ma Vie v0.3.22 :
+                      // horizon relevé, moins de ciel et davantage de paysage.
+                      if(placePhotoRes!=null) cover(placePhotoRes,zoom=1.18f,posY=.62f)
                       else c.drawColor(if(night)Color.rgb(7,31,48) else Color.rgb(105,166,198))
                       // Couche 2 : moment/ciel photographique.
                       if(night) cover(R.drawable.meteo_night_stars,118,true)
