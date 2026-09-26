@@ -681,14 +681,12 @@ jobs:
                       }
                       if(night) {
                           c.drawRect(0f,0f,w.toFloat(),h.toFloat(),Paint().apply{color=Color.argb(158,0,4,10)})
-                          // v0.3.26 : petit croissant dessiné par Canvas, sans ressource image.
-                          // EVEN_ODD découpe le disque intérieur et laisse voir le vrai ciel dessous.
-                          val moon=Path().apply{
-                              fillType=Path.FillType.EVEN_ODD
-                              addCircle(w*.78f,h*.16f,18f,Path.Direction.CW)
-                              addCircle(w*.79f,h*.153f,16f,Path.Direction.CW)
-                          }
-                          c.drawPath(moon,Paint(Paint.ANTI_ALIAS_FLAG).apply{color=Color.argb(225,255,248,214)})
+                          // v0.3.27 : petit croissant discret dessiné par Canvas, sans ressource image.
+                          // DIFFERENCE retire réellement le disque intérieur : un seul croissant, pas deux.
+                          val outerMoon=Path().apply{ addCircle(w*.79f,h*.15f,12f,Path.Direction.CW) }
+                          val innerMoon=Path().apply{ addCircle(w*.795f,h*.145f,11f,Path.Direction.CW) }
+                          outerMoon.op(innerMoon,Path.Op.DIFFERENCE)
+                          c.drawPath(outerMoon,Paint(Paint.ANTI_ALIAS_FLAG).apply{color=Color.argb(215,255,248,214)})
                       }
                       return b
                   }
