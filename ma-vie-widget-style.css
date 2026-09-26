@@ -551,3 +551,33 @@ body[data-weather="snow"] .weather-scene{
   background-size:auto 118%!important;
   background-position:center 62%!important;
 }
+
+
+/* v0.3.24 — Nuit plus sombre.
+   Le cadrage v0.3.22 reste strictement inchangé.
+   La nuit devient presque noire comme la réalité observée à Ursy ;
+   les étoiles sont discrètes et limitées à la partie ciel. */
+body[data-period="night"] .weather-scene{
+  filter:brightness(.16) saturate(.52) hue-rotate(5deg)!important;
+}
+body[data-period="night"] .weather-effect{
+  background-image:url('meteo-night-stars.jpg')!important;
+  background-size:cover!important;
+  background-position:center top!important;
+  opacity:.16!important;
+  mix-blend-mode:screen!important;
+  -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 31%,rgba(0,0,0,.72) 38%,rgba(0,0,0,.20) 44%,transparent 49%)!important;
+  mask-image:linear-gradient(to bottom,#000 0%,#000 31%,rgba(0,0,0,.72) 38%,rgba(0,0,0,.20) 44%,transparent 49%)!important;
+}
+body[data-period="night"] .weather-scene:after{
+  background:linear-gradient(180deg,rgba(0,4,9,.48) 0%,rgba(0,3,7,.60) 50%,rgba(0,2,5,.72) 100%)!important;
+}
+/* Les phénomènes nocturnes restent visibles, mais dans une ambiance réellement sombre. */
+body[data-period="night"][data-weather="rain"] .weather-effect,
+body[data-period="night"][data-weather="storm"] .weather-effect,
+body[data-period="night"][data-weather="fog"] .weather-effect,
+body[data-period="night"][data-weather="snow"] .weather-effect{
+  opacity:.30!important;
+  -webkit-mask-image:none!important;
+  mask-image:none!important;
+}
