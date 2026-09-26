@@ -153,6 +153,7 @@ jobs:
               android:id="@+id/widget_root" android:layout_width="match_parent" android:layout_height="match_parent"
               android:padding="8dp" android:background="@drawable/widget_frame">
               <ImageView android:id="@+id/weather_background" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop"/>
+              <ImageView android:id="@+id/widget_moon" android:layout_width="24dp" android:layout_height="24dp" android:layout_gravity="top|right" android:layout_marginTop="42dp" android:layout_marginRight="17%" android:visibility="gone"/>
               <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:padding="8dp">
                   <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
                       <TextView android:id="@+id/widget_place" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Ursy" android:textColor="#FFFFFFFF" android:textSize="20sp" android:textStyle="bold"/>
@@ -575,6 +576,9 @@ jobs:
                       ids.forEach{id->
                           val v=RemoteViews(context.packageName,R.layout.ma_vie_widget)
                           v.setTextViewText(R.id.widget_place,shownPlace); v.setTextViewText(R.id.widget_temp,weather.first); v.setImageViewBitmap(R.id.weather_background,bg)
+                          val isNight=weather.second>=1000
+                          v.setViewVisibility(R.id.widget_moon,if(isNight)View.VISIBLE else View.GONE)
+                          if(isNight)v.setImageViewBitmap(R.id.widget_moon,moonBitmap())
                           v.setTextViewText(R.id.widget_know,ev.second)
                           v.setTextViewText(R.id.widget_glucose, if(libre?.optBoolean("ok")==true) "🩸 %.1f mmol/L %s".format(Locale.US,libre.optDouble("mmol"),libre.optString("arrow")) else "🩸 Glycémie —")
                           v.setTextViewText(R.id.widget_enyaq,if(enyaq?.optBoolean("ok")==true) "🚙 %.0f %% · %.0f km".format(Locale.US,enyaq.optDouble("percent"),enyaq.optDouble("km")) else "🚙 Enyaq —")
@@ -629,6 +633,15 @@ jobs:
                       return 2*r*Math.atan2(Math.sqrt(x),Math.sqrt(1-x))
                   }
 
+                  private fun moonBitmap():Bitmap{
+                      val size=48; val b=Bitmap.createBitmap(size,size,Bitmap.Config.ARGB_8888); val c=Canvas(b)
+                      val outer=Path().apply{addCircle(24f,24f,15f,Path.Direction.CW)}
+                      val inner=Path().apply{addCircle(29f,20f,14f,Path.Direction.CW)}
+                      outer.op(inner,Path.Op.DIFFERENCE)
+                      c.drawPath(outer,Paint(Paint.ANTI_ALIAS_FLAG).apply{color=Color.argb(215,255,248,214)})
+                      return b
+                  }
+
                   private fun sceneBitmap(context:Context,code:Int,placeName:String,lat:Double?,lon:Double?):Bitmap{
                       val w=1200; val h=700; val b=Bitmap.createBitmap(w,h,Bitmap.Config.ARGB_8888); val c=Canvas(b)
                       val night=code>=1000; val wc=code%1000
@@ -681,12 +694,6 @@ jobs:
                       }
                       if(night) {
                           c.drawRect(0f,0f,w.toFloat(),h.toFloat(),Paint().apply{color=Color.argb(158,0,4,10)})
-                          // v0.3.27 : petit croissant discret dessiné par Canvas, sans ressource image.
-                          // DIFFERENCE retire réellement le disque intérieur : un seul croissant, pas deux.
-                          val outerMoon=Path().apply{ addCircle(w*.79f,h*.15f,12f,Path.Direction.CW) }
-                          val innerMoon=Path().apply{ addCircle(w*.795f,h*.145f,11f,Path.Direction.CW) }
-                          outerMoon.op(innerMoon,Path.Op.DIFFERENCE)
-                          c.drawPath(outerMoon,Paint(Paint.ANTI_ALIAS_FLAG).apply{color=Color.argb(215,255,248,214)})
                       }
                       return b
                   }
