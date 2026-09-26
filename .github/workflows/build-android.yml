@@ -679,7 +679,17 @@ jobs:
                           "snow" -> cover(when(intensity){"heavy"->R.drawable.meteo_snow_heavy;"medium"->R.drawable.meteo_snow_medium;else->R.drawable.meteo_snow_light},when(intensity){"heavy"->194;"medium"->158;else->126},true)
                           "storm" -> cover(R.drawable.meteo_storm,190,false)
                       }
-                      if(night) c.drawRect(0f,0f,w.toFloat(),h.toFloat(),Paint().apply{color=Color.argb(158,0,4,10)})
+                      if(night) {
+                          c.drawRect(0f,0f,w.toFloat(),h.toFloat(),Paint().apply{color=Color.argb(158,0,4,10)})
+                          // v0.3.26 : petit croissant dessiné par Canvas, sans ressource image.
+                          // EVEN_ODD découpe le disque intérieur et laisse voir le vrai ciel dessous.
+                          val moon=Path().apply{
+                              fillType=Path.FillType.EVEN_ODD
+                              addCircle(w*.78f,h*.16f,18f,Path.Direction.CW)
+                              addCircle(w*.79f,h*.153f,16f,Path.Direction.CW)
+                          }
+                          c.drawPath(moon,Paint(Paint.ANTI_ALIAS_FLAG).apply{color=Color.argb(225,255,248,214)})
+                      }
                       return b
                   }
 
