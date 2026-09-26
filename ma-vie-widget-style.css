@@ -581,3 +581,30 @@ body[data-period="night"][data-weather="snow"] .weather-effect{
   -webkit-mask-image:none!important;
   mask-image:none!important;
 }
+
+
+/* v0.3.25 — Nuit médiane : entre v0.3.22 et v0.3.24.
+   Horizon/cadrage inchangés ; paysage encore lisible sans perdre l'ambiance nocturne. */
+body[data-period="night"] .weather-scene{
+  filter:brightness(.29) saturate(.64) hue-rotate(4deg)!important;
+}
+body[data-period="night"] .weather-effect{
+  background-image:url('meteo-night-stars.jpg')!important;
+  background-size:cover!important;
+  background-position:center top!important;
+  opacity:.23!important;
+  mix-blend-mode:screen!important;
+  -webkit-mask-image:linear-gradient(to bottom,#000 0%,#000 31%,rgba(0,0,0,.72) 38%,rgba(0,0,0,.20) 44%,transparent 49%)!important;
+  mask-image:linear-gradient(to bottom,#000 0%,#000 31%,rgba(0,0,0,.72) 38%,rgba(0,0,0,.20) 44%,transparent 49%)!important;
+}
+body[data-period="night"] .weather-scene:after{
+  background:linear-gradient(180deg,rgba(0,4,9,.25) 0%,rgba(0,3,7,.34) 50%,rgba(0,2,5,.44) 100%)!important;
+}
+body[data-period="night"][data-weather="rain"] .weather-effect,
+body[data-period="night"][data-weather="storm"] .weather-effect,
+body[data-period="night"][data-weather="fog"] .weather-effect,
+body[data-period="night"][data-weather="snow"] .weather-effect{
+  opacity:.40!important;
+  -webkit-mask-image:none!important;
+  mask-image:none!important;
+}
