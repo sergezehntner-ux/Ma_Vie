@@ -5,3 +5,5 @@
 .refresh-personal.is-refreshing{animation:mv-refresh-spin .45s linear}
 @keyframes mv-refresh-spin{to{transform:rotate(360deg)}}
 .permanent-dock .metrics{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+/* 2026-09-26 — POUR MOI : centrer le contenu des deux tuiles */
+.permanent-dock .metric{justify-content:center!important}

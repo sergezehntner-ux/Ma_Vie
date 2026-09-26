@@ -66,7 +66,7 @@ function state(ev,now=new Date()){
   tomorrow:ev.filter(e=>eventDayKey(e)===tomorrow).sort(agendaSort)
  };
 }
-function androidEvents(){if(!window.MaVieAndroid||typeof window.MaVieAndroid.getEvents!=='function')return null;try{return JSON.parse(window.MaVieAndroid.getEvents()||'[]').map(e=>({title:e.title||'(Sans titre)',place:e.place||'',start:new Date(+e.start),end:new Date(+e.end),calendar:e.calendar||'',allDay:!!e.allDay})).filter(e=>{if(isNaN(e.start)||isNaN(e.end))return false;let x=(e.title+' '+e.calendar).toLowerCase();return !/week\s*numbers?|num[ée]ros?\s+de\s+semaine|semaine\s+\d{1,2}/i.test(x)})}catch(e){console.warn(e);return[]}}
+function androidEvents(){if(!window.MaVieAndroid||typeof window.MaVieAndroid.getEvents!=='function')return null;try{return JSON.parse(window.MaVieAndroid.getEvents()||'[]').map(e=>({title:e.title||'(Sans titre)',place:e.place||'',start:new Date(+e.start),end:new Date(+e.end),calendar:e.calendar||'',allDay:!!e.allDay,description:e.description||''})).filter(e=>{if(isNaN(e.start)||isNaN(e.end))return false;let x=(e.title+' '+e.calendar).toLowerCase();return !/week\s*numbers?|num[ée]ros?\s+de\s+semaine|semaine\s+\d{1,2}/i.test(x)})}catch(e){console.warn(e);return[]}}
 function demo(){let now=new Date(),at=(o,h,m,t,p)=>{let d=new Date(now);d.setDate(d.getDate()+o);d.setHours(h,m,0,0);return{title:t,place:p,start:d,end:new Date(d.getTime()+3600000),allDay:false}};return[at(0,20,0,'Atelier de patois','Fribourg'),at(1,9,30,'Romont',''),at(1,14,0,'Épalinges','')]}
 function kind(e){let t=(e.title+' '+e.calendar).toLowerCase();if(/mariage|wedding/.test(t))return'💍';if(/anniversaire|birthday|geburtstag/.test(t)||/\b\d{1,3}\s*$/.test(e.title))return'🎂';if(/jour férié|ferie|holiday|jeûne fédéral|jeune federal/.test(t))return'🇨🇭';return'•'}
 function displayAgendaTitle(e){
@@ -77,10 +77,12 @@ function displayAgendaTitle(e){
 function allDayHtml(e){
  return `<div class="appointment all-day compact-row"><time>${kind(e)}</time><div><strong>${esc(displayAgendaTitle(e))}</strong>${e.place?`<small>${esc(e.place)}</small>`:''}</div></div>`
 }
-function timedTodayHtml(e){return `<div class="appointment timed-agenda compact-row"><time>${hm(e.start)}</time><strong class="appointment-title">${esc(e.title)}</strong><span class="appointment-end">jusqu’à ${hm(e.end)}</span>${e.place?'<span class="appointment-pin" aria-hidden="true">📍</span>':''}${e.place?`<small class="appointment-place">${esc(e.place)}</small>`:''}</div>`}
+function agendaDetails(e){return [e.place,e.description].map(x=>(x||'').trim()).filter(Boolean).join(' · ')}
+function timedTodayHtml(e){const d=agendaDetails(e);return `<div class="appointment timed-agenda compact-row"><time>${hm(e.start)}</time><strong class="appointment-title">${esc(e.title)}</strong><span class="appointment-end">jusqu’à ${hm(e.end)}</span>${d?'<span class="appointment-pin" aria-hidden="true">📍</span>':''}${d?`<small class="appointment-place">${esc(d)}</small>`:''}</div>`}
 function tomorrowHtml(e){
  if(e.allDay)return allDayHtml(e);
- return `<div class="appointment timed-tomorrow timed-agenda compact-row"><time>${hm(e.start)}</time><strong class="appointment-title">${esc(e.title)}</strong><span class="appointment-end">jusqu’à ${hm(e.end)}</span>${e.place?'<span class="appointment-pin" aria-hidden="true">📍</span>':''}${e.place?`<small class="appointment-place">${esc(e.place)}</small>`:''}</div>`
+ const d=agendaDetails(e);
+ return `<div class="appointment timed-tomorrow timed-agenda compact-row"><time>${hm(e.start)}</time><strong class="appointment-title">${esc(e.title)}</strong><span class="appointment-end">jusqu’à ${hm(e.end)}</span>${d?'<span class="appointment-pin" aria-hidden="true">📍</span>':''}${d?`<small class="appointment-place">${esc(d)}</small>`:''}</div>`
 }
 function renderAgenda(ev,real){
  let s=state(ev),ta=$('#todayAppointments'),te=$('#todayEmpty'),tl=$('#tomorrowAppointments'),tme=$('#tomorrowEmpty');
