@@ -408,3 +408,39 @@ body[data-weather="snow"] .weather-scene{
   background-position:right center!important;
   background-size:cover!important;
 }
+
+/* v0.3.18 — décor météo réellement adaptatif.
+   La photo de fond suit la condition ACTUELLE et la période de la journée.
+   Elle est recalculée à chaque actualisation météo (15 min) : un matin pluvieux
+   peut donc devenir un après-midi ensoleillé sans recharger l'application. */
+body{--adaptive-weather-photo:url('meteo-sun-day.jpg')}
+body[data-weather="clear"],body[data-weather="sun"]{--adaptive-weather-photo:url('meteo-sun-day.jpg')}
+body[data-weather="clear"][data-period="dawn"],body[data-weather="sun"][data-period="dawn"],
+body[data-weather="clear"][data-period="morning"],body[data-weather="sun"][data-period="morning"]{--adaptive-weather-photo:url('meteo-sun-morning.jpg')}
+body[data-weather="clear"][data-period="evening"],body[data-weather="sun"][data-period="evening"]{--adaptive-weather-photo:url('meteo-sun-evening.jpg')}
+body[data-weather="cloud"]{--adaptive-weather-photo:url('meteo-cloud-medium.jpg')}
+body[data-weather="cloud"][data-weather-group="light_cloud"]{--adaptive-weather-photo:url('meteo-cloud-light.jpg')}
+body[data-weather="cloud"][data-weather-intensity="heavy"]{--adaptive-weather-photo:url('meteo-cloud-heavy.jpg')}
+body[data-weather="rain"]{--adaptive-weather-photo:url('meteo-rain-light.jpg')}
+body[data-weather="rain"][data-weather-intensity="heavy"]{--adaptive-weather-photo:url('meteo-rain-heavy.jpg')}
+body[data-weather="storm"]{--adaptive-weather-photo:url('meteo-storm.jpg')}
+body[data-weather="fog"]{--adaptive-weather-photo:url('meteo-fog-light.jpg')}
+body[data-weather="fog"][data-weather-intensity="dense"]{--adaptive-weather-photo:url('meteo-fog-dense.jpg')}
+body[data-weather="snow"]{--adaptive-weather-photo:url('meteo-snow-light.jpg')}
+body[data-weather="snow"][data-weather-intensity="medium"]{--adaptive-weather-photo:url('meteo-snow-medium.jpg')}
+body[data-weather="snow"][data-weather-intensity="heavy"]{--adaptive-weather-photo:url('meteo-snow-heavy.jpg')}
+body[data-period="night"]{--adaptive-weather-photo:url('meteo-night-stars.jpg')}
+body[data-period="night"][data-weather="rain"]{--adaptive-weather-photo:url('meteo-rain-heavy.jpg')}
+body[data-period="night"][data-weather="storm"]{--adaptive-weather-photo:url('meteo-storm.jpg')}
+body[data-period="night"][data-weather="fog"]{--adaptive-weather-photo:url('meteo-fog-dense.jpg')}
+body[data-period="night"][data-weather="snow"]{--adaptive-weather-photo:url('meteo-snow-medium.jpg')}
+.weather-scene,
+body[data-weather="snow"] .weather-scene{
+  background-image:var(--adaptive-weather-photo)!important;
+  background-position:center center!important;
+  background-size:cover!important;
+  filter:none!important;
+}
+/* La photo EST désormais la météo : pas de deuxième photo superposée. */
+.weather-effect{display:none!important}
+.weather-scene:after{background:linear-gradient(180deg,rgba(0,18,28,.05),rgba(0,12,18,.13))!important}
