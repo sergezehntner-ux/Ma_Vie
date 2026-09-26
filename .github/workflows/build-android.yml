@@ -647,11 +647,11 @@ jobs:
                       return b
                   }
 
-                  data class WidgetEvent(val start:String,val end:String,val title:String,val place:String)
+                  data class WidgetEvent(val start:String,val end:String,val title:String,val place:String,val description:String)
                   private fun bindAgenda(v:RemoteViews,items:List<WidgetEvent>,narrow:Boolean){
                       v.setViewVisibility(R.id.widget_now_empty,if(items.isEmpty())View.VISIBLE else View.GONE)
                       val rows=arrayOf(R.id.event1,R.id.event2,R.id.event3); val starts=arrayOf(R.id.event1_start,R.id.event2_start,R.id.event3_start); val titles=arrayOf(R.id.event1_title,R.id.event2_title,R.id.event3_title); val endw=arrayOf(R.id.event1_endwide,R.id.event2_endwide,R.id.event3_endwide); val endn=arrayOf(R.id.event1_endnarrow,R.id.event2_endnarrow,R.id.event3_endnarrow); val places=arrayOf(R.id.event1_place,R.id.event2_place,R.id.event3_place)
-                      for(i in rows.indices){ val e=items.getOrNull(i); v.setViewVisibility(rows[i],if(e==null)View.GONE else View.VISIBLE); if(e!=null){v.setTextViewText(starts[i],e.start);v.setTextViewText(titles[i],e.title);v.setTextViewText(places[i],e.place);v.setTextViewText(endw[i],if(narrow)"" else "jusqu'à ${e.end}");v.setTextViewText(endn[i],if(narrow)"- ${e.end}" else "");v.setViewVisibility(endw[i],if(narrow)View.GONE else View.VISIBLE);v.setViewVisibility(endn[i],if(narrow)View.VISIBLE else View.INVISIBLE)}}
+                      for(i in rows.indices){ val e=items.getOrNull(i); v.setViewVisibility(rows[i],if(e==null)View.GONE else View.VISIBLE); if(e!=null){v.setTextViewText(starts[i],e.start);v.setTextViewText(titles[i],e.title);val details=listOf(e.place,e.description).map{it.trim()}.filter{it.isNotEmpty()}.joinToString(" · ");v.setTextViewText(places[i],details);v.setTextViewText(endw[i],if(narrow)"" else "jusqu'à ${e.end}");v.setTextViewText(endn[i],if(narrow)"- ${e.end}" else "");v.setViewVisibility(endw[i],if(narrow)View.GONE else View.VISIBLE);v.setViewVisibility(endn[i],if(narrow)View.VISIBLE else View.INVISIBLE)}}
                   }
 
                   private fun events(c:Context):Pair<List<WidgetEvent>,String>{
@@ -660,10 +660,10 @@ jobs:
                       val tomorrowStart=Calendar.getInstance().apply{timeInMillis=todayStart;add(Calendar.DAY_OF_YEAR,1)}.timeInMillis
                       val end=tomorrowStart-1
                       val uri=CalendarContract.Instances.CONTENT_URI.buildUpon().also{android.content.ContentUris.appendId(it,todayStart);android.content.ContentUris.appendId(it,end)}.build()
-                      val p=arrayOf(CalendarContract.Instances.TITLE,CalendarContract.Instances.BEGIN,CalendarContract.Instances.END,CalendarContract.Instances.EVENT_LOCATION,CalendarContract.Instances.ALL_DAY)
+                      val p=arrayOf(CalendarContract.Instances.TITLE,CalendarContract.Instances.BEGIN,CalendarContract.Instances.END,CalendarContract.Instances.EVENT_LOCATION,CalendarContract.Instances.ALL_DAY,CalendarContract.Instances.DESCRIPTION)
                       val timed=mutableListOf<WidgetEvent>(); val periods=mutableListOf<String>(); val events=mutableListOf<String>(); val important=mutableListOf<String>(); val tf=SimpleDateFormat("HH:mm",Locale.getDefault())
                       try{c.contentResolver.query(uri,p,null,null,CalendarContract.Instances.BEGIN+" ASC")?.use{q->while(q.moveToNext()){
-                          val title=q.getString(0)?:""; val start=q.getLong(1); val stop=q.getLong(2); val loc=q.getString(3)?:""; val all=q.getInt(4)==1
+                          val title=q.getString(0)?:""; val start=q.getLong(1); val stop=q.getLong(2); val loc=q.getString(3)?:""; val all=q.getInt(4)==1; val desc=q.getString(5)?:""
                           if(all){
                               // CalendarProvider stores ALL_DAY BEGIN/END at UTC midnight.  Do not compare
                               // those instants with local-midnight milliseconds: around UTC+02 this makes
@@ -682,7 +682,7 @@ jobs:
                                   else events.add("• "+title)
                               }
                           }
-                          else if(stop>=now && start<=end){ if(timed.size<3) timed.add(WidgetEvent(tf.format(Date(start)),tf.format(Date(stop)),title,loc)) }
+                          else if(stop>=now && start<=end){ if(timed.size<3) timed.add(WidgetEvent(tf.format(Date(start)),tf.format(Date(stop)),title,loc,desc)) }
                       }}}catch(_:Exception){}
                       val know=(periods+events+important).take(3)
                       return Pair(timed,if(know.isEmpty())"Rien de particulier aujourd’hui." else know.joinToString("\n"))
