@@ -409,6 +409,56 @@ body[data-weather="snow"] .weather-scene{
   background-size:cover!important;
 }
 
-/* Test localité — photo réelle fournie par Serge.
-   La vraie interface Ma Vie reste inchangée ; seule la photo du lieu est imposée. */
-:root{--place-photo:url('ursy-localite.jpg')}
+/* v0.3.19 — composition réelle par couches.
+   Couche 1 = photo permanente du lieu (Ursy).
+   Couche 2 = ciel / phénomène météo photographique selon Open-Meteo.
+   Couche 3 = correction lumineuse selon le moment de la journée.
+   La photo météo ne remplace donc plus le lieu : elle se superpose à lui. */
+.weather-scene,
+body[data-weather="snow"] .weather-scene{
+  background-image:url('ursy-green.jpg')!important;
+  background-position:right center!important;
+  background-size:cover!important;
+  background-repeat:no-repeat!important;
+  filter:none!important;
+}
+.weather-effect{
+  display:block!important;
+  position:absolute!important;
+  inset:0!important;
+  z-index:3!important;
+  pointer-events:none!important;
+  background-size:cover!important;
+  background-position:center center!important;
+  background-repeat:no-repeat!important;
+  opacity:0;
+  mix-blend-mode:screen!important;
+}
+/* ciel clair / soleil */
+body[data-weather="clear"] .weather-effect,body[data-weather="sun"] .weather-effect{background-image:url('meteo-sun-day.jpg');opacity:.42}
+body[data-weather="clear"][data-period="morning"] .weather-effect,body[data-weather="sun"][data-period="morning"] .weather-effect{background-image:url('meteo-sun-morning.jpg');opacity:.46}
+body[data-weather="clear"][data-period="evening"] .weather-effect,body[data-weather="sun"][data-period="evening"] .weather-effect{background-image:url('meteo-sun-evening.jpg');opacity:.52}
+/* nuages */
+body[data-weather="cloud"] .weather-effect{background-image:url('meteo-cloud-medium.jpg');opacity:.48}
+body[data-weather="cloud"][data-weather-group="light_cloud"] .weather-effect{background-image:url('meteo-cloud-light.jpg');opacity:.42}
+body[data-weather="cloud"][data-weather-intensity="heavy"] .weather-effect{background-image:url('meteo-cloud-heavy.jpg');opacity:.58}
+/* pluie et orage : couche plus opaque pour transformer réellement la scène */
+body[data-weather="rain"] .weather-effect{background-image:url('meteo-rain-light.jpg');opacity:.56;mix-blend-mode:normal!important}
+body[data-weather="rain"][data-weather-intensity="heavy"] .weather-effect{background-image:url('meteo-rain-heavy.jpg');opacity:.72;mix-blend-mode:normal!important}
+body[data-weather="storm"] .weather-effect{background-image:url('meteo-storm.jpg');opacity:.74;mix-blend-mode:normal!important}
+/* brouillard */
+body[data-weather="fog"] .weather-effect{background-image:url('meteo-fog-light.jpg');opacity:.56}
+body[data-weather="fog"][data-weather-intensity="dense"] .weather-effect{background-image:url('meteo-fog-dense.jpg');opacity:.76}
+/* neige : on garde Ursy dessous et la neige est bien une couche météo */
+body[data-weather="snow"] .weather-effect{background-image:url('meteo-snow-light.jpg');opacity:.58}
+body[data-weather="snow"][data-weather-intensity="medium"] .weather-effect{background-image:url('meteo-snow-medium.jpg');opacity:.68}
+body[data-weather="snow"][data-weather-intensity="heavy"] .weather-effect{background-image:url('meteo-snow-heavy.jpg');opacity:.78}
+/* nuit : le même lieu, assombri, avec ciel nocturne superposé */
+body[data-period="night"] .weather-scene{filter:brightness(.48) saturate(.76) hue-rotate(3deg)!important}
+body[data-period="night"] .weather-effect{background-image:url('meteo-night-stars.jpg'),url('meteo-night-moon.jpg');background-size:cover,cover!important;opacity:.58;mix-blend-mode:screen!important}
+body[data-period="night"][data-weather="rain"] .weather-effect{background-image:url('meteo-rain-heavy.jpg');opacity:.64;mix-blend-mode:normal!important}
+body[data-period="night"][data-weather="fog"] .weather-effect{background-image:url('meteo-fog-dense.jpg');opacity:.70;mix-blend-mode:screen!important}
+body[data-period="night"][data-weather="snow"] .weather-effect{background-image:url('meteo-snow-medium.jpg');opacity:.72;mix-blend-mode:screen!important}
+body[data-period="night"][data-weather="storm"] .weather-effect{background-image:url('meteo-storm.jpg');opacity:.74;mix-blend-mode:normal!important}
+/* légère correction d'ambiance au-dessus de toutes les couches */
+.weather-scene:after{content:""!important;position:absolute!important;inset:0!important;z-index:4!important;pointer-events:none!important;background:linear-gradient(180deg,rgba(0,18,28,.015),rgba(0,12,18,.09))!important}
