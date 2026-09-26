@@ -610,21 +610,20 @@ body[data-period="night"][data-weather="snow"] .weather-effect{
 }
 
 
-/* v0.3.28 — Même petit croissant sur Ma Vie et les deux widgets.
-   Position/forme calquées sur le grand widget ; aucune autre couche n'est modifiée. */
-body[data-period="night"] .weather-scene:before{
-  content:"";
-  display:block!important;
-  position:absolute;
+/* v0.3.29 — Croissant de Ma Vie indépendant de la scène météo.
+   Même position visuelle que le grand widget ; aucune autre couche n'est modifiée. */
+.weather-scene:before{content:none!important;display:none!important;}
+.mv-night-crescent{
+  display:none;
+  position:fixed;
   z-index:6;
   top:12%;
   right:18%;
   width:18px;
   height:18px;
   border-radius:50%;
-  background:radial-gradient(circle at 68% 42%,transparent 0 53%,rgba(255,248,214,.86) 55% 100%)!important;
+  background:radial-gradient(circle at 68% 42%,transparent 0 53%,rgba(255,248,214,.86) 55% 100%);
   box-shadow:0 0 7px rgba(255,245,205,.16);
-  opacity:1!important;
   pointer-events:none;
 }
-body:not([data-period="night"]) .weather-scene:before{content:none!important;display:none!important;}
+body[data-period="night"] .mv-night-crescent{display:block;}
