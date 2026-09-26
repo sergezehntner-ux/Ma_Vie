@@ -542,3 +542,12 @@ body[data-period="night"] .weather-effect{
   -webkit-mask-image:none!important;
   mask-image:none!important;
 }
+
+/* v0.3.22 — Horizon relevé : moins de ciel, davantage de paysage.
+   On agrandit légèrement la photo du lieu et on l'ancre vers le haut,
+   sans changer les cartes ni la logique météo. */
+.weather-scene,
+body[data-weather="snow"] .weather-scene{
+  background-size:auto 118%!important;
+  background-position:center 62%!important;
+}
