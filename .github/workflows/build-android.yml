@@ -660,7 +660,13 @@ jobs:
                       if(placePhotoRes!=null) cover(placePhotoRes,zoom=1.18f,posY=.62f)
                       else c.drawColor(if(night)Color.rgb(7,31,48) else Color.rgb(105,166,198))
                       // Couche 2 : moment/ciel photographique.
-                      if(night) cover(R.drawable.meteo_night_stars,118,true)
+                      if(night){
+                          // v0.3.24 : étoiles discrètes, uniquement dans le ciel.
+                          c.save()
+                          c.clipRect(0f,0f,w.toFloat(),h*.48f)
+                          cover(R.drawable.meteo_night_stars,42,true)
+                          c.restore()
+                      }
                       else when(group){
                           "clear" -> cover(R.drawable.meteo_sun_day,48,true)
                           "light_cloud" -> cover(R.drawable.meteo_cloud_light,72,true)
@@ -673,7 +679,7 @@ jobs:
                           "snow" -> cover(when(intensity){"heavy"->R.drawable.meteo_snow_heavy;"medium"->R.drawable.meteo_snow_medium;else->R.drawable.meteo_snow_light},when(intensity){"heavy"->194;"medium"->158;else->126},true)
                           "storm" -> cover(R.drawable.meteo_storm,190,false)
                       }
-                      if(night) c.drawRect(0f,0f,w.toFloat(),h.toFloat(),Paint().apply{color=Color.argb(48,0,12,28)})
+                      if(night) c.drawRect(0f,0f,w.toFloat(),h.toFloat(),Paint().apply{color=Color.argb(158,0,4,10)})
                       return b
                   }
 
