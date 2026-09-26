@@ -610,8 +610,8 @@ body[data-period="night"][data-weather="snow"] .weather-effect{
 }
 
 
-/* v0.3.27 — Petit croissant nocturne discret, 100 % CSS (aucune image).
-   Seul le croissant change : nuit v0.3.25, cadrage, horizon et luminosité inchangés. */
+/* v0.3.28 — Même petit croissant sur Ma Vie et les deux widgets.
+   Position/forme calquées sur le grand widget ; aucune autre couche n'est modifiée. */
 body[data-period="night"] .weather-scene:before{
   content:"";
   display:block!important;
@@ -622,12 +622,9 @@ body[data-period="night"] .weather-scene:before{
   width:18px;
   height:18px;
   border-radius:50%;
-  background:transparent!important;
-  box-shadow:-5px 1px 0 1px rgba(255,248,214,.86), -6px 1px 7px rgba(255,245,205,.16);
+  background:radial-gradient(circle at 68% 42%,transparent 0 53%,rgba(255,248,214,.86) 55% 100%)!important;
+  box-shadow:0 0 7px rgba(255,245,205,.16);
   opacity:1!important;
   pointer-events:none;
 }
-body:not([data-period="night"]) .weather-scene:before{
-  content:none!important;
-  display:none!important;
-}
+body:not([data-period="night"]) .weather-scene:before{content:none!important;display:none!important;}
