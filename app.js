@@ -31,7 +31,17 @@ function mins(iso){let m=String(iso||'').match(/T(\d{2}):(\d{2})/);return m?(+m[
 function solarPeriod(nowIso,sunriseIso,sunsetIso,isDay){let n=mins(nowIso),sr=mins(sunriseIso),ss=mins(sunsetIso);if(n===null||sr===null||ss===null)return +isDay===1?period(+String(nowIso||'').slice(11,13)):'night';if(n<sr||n>ss+35)return'night';if(n<sr+75)return'dawn';if(n>=ss-75)return'evening';return'day'}
 function applyWeather(x){document.body.dataset.weather=x.weather;document.body.dataset.period=x.period;if(x.code!==undefined&&x.code!==null){document.body.dataset.weatherCode=String(x.code);if(window.MaVieMeteo)window.MaVieMeteo.apply(+x.code)}$('#temperatureLabel').textContent=x.temperature+'°';if(x.place)$('#weatherPlace').textContent=x.place;if($('#demoWeather'))$('#demoWeather').value=x.weather;if($('#demoPeriod'))$('#demoPeriod').value=x.period}
 async function place(lat,lon){try{let r=await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lon}&localityLanguage=fr`,{cache:'no-store'});let d=await r.json();return d.locality||d.city||d.principalSubdivision||''}catch{return''}}
-async function weatherAt(lat,lon){try{let [r,pl]=await Promise.all([fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day&daily=sunrise,sunset&timezone=auto&forecast_days=1`,{cache:'no-store'}),place(lat,lon)]),d=await r.json(),c=d.current,sr=d.daily?.sunrise?.[0],ss=d.daily?.sunset?.[0],x={weather:wmo(c.weather_code),period:solarPeriod(c.time,sr,ss,c.is_day),temperature:Math.round(c.temperature_2m),place:pl,code:+c.weather_code};applyWeather(x);localStorage.setItem('maVieWeather',JSON.stringify(x));return true}catch{return false}}
+const PLACE_PHOTOS=[
+ {name:'Ursy',lat:46.634729,lon:6.834161,radiusKm:3.5,file:'ursy-green.jpg'}
+];
+function geoDistanceKm(aLat,aLon,bLat,bLon){const r=6371,dLat=(bLat-aLat)*Math.PI/180,dLon=(bLon-aLon)*Math.PI/180,x=Math.sin(dLat/2)**2+Math.cos(aLat*Math.PI/180)*Math.cos(bLat*Math.PI/180)*Math.sin(dLon/2)**2;return 2*r*Math.atan2(Math.sqrt(x),Math.sqrt(1-x))}
+function applyPlacePhoto(lat,lon,placeName=''){
+ const hit=PLACE_PHOTOS.find(p=>(Number.isFinite(+lat)&&Number.isFinite(+lon)&&geoDistanceKm(+lat,+lon,p.lat,p.lon)<=p.radiusKm)||String(placeName).toLowerCase()===p.name.toLowerCase());
+ const scene=document.querySelector('.weather-scene'); if(!scene)return null;
+ if(hit){scene.style.setProperty('--place-photo',`url('${hit.file}')`);document.body.dataset.placePhoto=hit.name;return hit}
+ scene.style.setProperty('--place-photo','linear-gradient(160deg,#6f9fb2 0%,#a8c4c8 48%,#cad3c7 100%)');delete document.body.dataset.placePhoto;return null
+}
+async function weatherAt(lat,lon){try{let [r,pl]=await Promise.all([fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,is_day&daily=sunrise,sunset&timezone=auto&forecast_days=1`,{cache:'no-store'}),place(lat,lon)]),d=await r.json(),c=d.current,sr=d.daily?.sunrise?.[0],ss=d.daily?.sunset?.[0],x={weather:wmo(c.weather_code),period:solarPeriod(c.time,sr,ss,c.is_day),temperature:Math.round(c.temperature_2m),place:pl,code:+c.weather_code};applyPlacePhoto(lat,lon,pl);applyWeather(x);localStorage.setItem('maVieWeather',JSON.stringify(x));return true}catch{return false}}
 function cachedWeather(){try{let x=JSON.parse(localStorage.getItem('maVieWeather')||'null');if(x)applyWeather(x)}catch{}}
 async function weather(){
   if(window.MaVieAndroid&&typeof window.MaVieAndroid.getLocation==='function'){

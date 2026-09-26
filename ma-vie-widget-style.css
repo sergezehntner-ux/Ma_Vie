@@ -398,3 +398,13 @@ body[data-period="night"][data-weather="fog"] .weather-effect{background-image:u
 body[data-period="night"][data-weather="snow"] .weather-effect{background-image:url('meteo-snow-medium.jpg');opacity:.64;mix-blend-mode:screen!important}
 body[data-period="night"][data-weather="storm"] .weather-effect{background-image:url('meteo-storm.jpg');opacity:.68;mix-blend-mode:normal!important}
 .weather-scene:after{content:""!important;position:absolute!important;inset:0!important;z-index:4!important;pointer-events:none!important;background:linear-gradient(180deg,rgba(0,15,24,.02),rgba(0,12,18,.08))!important}
+
+
+/* v0.3.17 étape 2 — la photo du lieu dépend uniquement de la géolocalisation.
+   Soleil/météo restent des couches séparées et ne remplacent jamais ce décor. */
+.weather-scene,
+body[data-weather="snow"] .weather-scene{
+  background-image:var(--place-photo,linear-gradient(160deg,#6f9fb2 0%,#a8c4c8 48%,#cad3c7 100%))!important;
+  background-position:right center!important;
+  background-size:cover!important;
+}
