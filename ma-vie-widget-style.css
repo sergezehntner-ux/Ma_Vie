@@ -462,3 +462,44 @@ body[data-period="night"][data-weather="snow"] .weather-effect{background-image:
 body[data-period="night"][data-weather="storm"] .weather-effect{background-image:url('meteo-storm.jpg');opacity:.74;mix-blend-mode:normal!important}
 /* légère correction d'ambiance au-dessus de toutes les couches */
 .weather-scene:after{content:""!important;position:absolute!important;inset:0!important;z-index:4!important;pointer-events:none!important;background:linear-gradient(180deg,rgba(0,18,28,.015),rgba(0,12,18,.09))!important}
+
+/* v0.3.20 — Lieu d'abord.
+   Le décor reste la toile principale; la météo ne fait que le transformer. */
+.weather-scene,
+body[data-weather="snow"] .weather-scene{
+  background-image:url('ursy-green.jpg')!important;
+  filter:none!important;
+}
+.weather-effect{opacity:0;mix-blend-mode:soft-light!important}
+/* Clair : presque aucune substitution du ciel; seulement lumière/contraste. */
+body[data-weather="clear"] .weather-effect,
+body[data-weather="sun"] .weather-effect{background-image:url('meteo-sun-day.jpg');opacity:.13}
+body[data-weather="clear"][data-period="morning"] .weather-effect,
+body[data-weather="sun"][data-period="morning"] .weather-effect{background-image:url('meteo-sun-morning.jpg');opacity:.18}
+body[data-weather="clear"][data-period="evening"] .weather-effect,
+body[data-weather="sun"][data-period="evening"] .weather-effect{background-image:url('meteo-sun-evening.jpg');opacity:.24}
+/* Nuages : texture légère; le ciel du lieu reste visible. */
+body[data-weather="cloud"] .weather-effect{background-image:url('meteo-cloud-medium.jpg');opacity:.22;mix-blend-mode:screen!important}
+body[data-weather="cloud"][data-weather-group="light_cloud"] .weather-effect{background-image:url('meteo-cloud-light.jpg');opacity:.16}
+body[data-weather="cloud"][data-weather-intensity="heavy"] .weather-effect{background-image:url('meteo-cloud-heavy.jpg');opacity:.34;mix-blend-mode:soft-light!important}
+/* Phénomènes réels : plus présents, sans remplacer complètement le lieu. */
+body[data-weather="rain"] .weather-effect{background-image:url('meteo-rain-light.jpg');opacity:.38;mix-blend-mode:soft-light!important}
+body[data-weather="rain"][data-weather-intensity="heavy"] .weather-effect{background-image:url('meteo-rain-heavy.jpg');opacity:.55;mix-blend-mode:normal!important}
+body[data-weather="storm"] .weather-effect{background-image:url('meteo-storm.jpg');opacity:.60;mix-blend-mode:normal!important}
+body[data-weather="fog"] .weather-effect{background-image:url('meteo-fog-light.jpg');opacity:.34;mix-blend-mode:screen!important}
+body[data-weather="fog"][data-weather-intensity="dense"] .weather-effect{background-image:url('meteo-fog-dense.jpg');opacity:.58;mix-blend-mode:screen!important}
+body[data-weather="snow"] .weather-effect{background-image:url('meteo-snow-light.jpg');opacity:.38;mix-blend-mode:screen!important}
+body[data-weather="snow"][data-weather-intensity="medium"] .weather-effect{background-image:url('meteo-snow-medium.jpg');opacity:.50}
+body[data-weather="snow"][data-weather-intensity="heavy"] .weather-effect{background-image:url('meteo-snow-heavy.jpg');opacity:.62}
+/* La lumière transforme aussi directement le lieu. */
+body[data-period="dawn"] .weather-scene,
+body[data-period="morning"] .weather-scene{filter:brightness(.96) saturate(.96) sepia(.035)!important}
+body[data-period="day"] .weather-scene{filter:brightness(1.02) saturate(1.02)!important}
+body[data-period="evening"] .weather-scene{filter:brightness(.88) saturate(1.04) sepia(.12)!important}
+body[data-period="night"] .weather-scene{filter:brightness(.43) saturate(.70) hue-rotate(5deg)!important}
+body[data-period="night"] .weather-effect{background-image:url('meteo-night-stars.jpg'),url('meteo-night-moon.jpg');opacity:.34;mix-blend-mode:screen!important}
+body[data-period="night"][data-weather="rain"] .weather-effect{background-image:url('meteo-rain-heavy.jpg');opacity:.48;mix-blend-mode:normal!important}
+body[data-period="night"][data-weather="fog"] .weather-effect{background-image:url('meteo-fog-dense.jpg');opacity:.50;mix-blend-mode:screen!important}
+body[data-period="night"][data-weather="snow"] .weather-effect{background-image:url('meteo-snow-medium.jpg');opacity:.52;mix-blend-mode:screen!important}
+body[data-period="night"][data-weather="storm"] .weather-effect{background-image:url('meteo-storm.jpg');opacity:.58;mix-blend-mode:normal!important}
+.weather-scene:after{background:linear-gradient(180deg,rgba(0,18,28,0),rgba(0,12,18,.055))!important}
