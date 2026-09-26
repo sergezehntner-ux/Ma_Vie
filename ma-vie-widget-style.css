@@ -610,21 +610,21 @@ body[data-period="night"][data-weather="snow"] .weather-effect{
 }
 
 
-/* v0.3.26 — Petit croissant nocturne, 100 % CSS (aucune image).
-   La nuit v0.3.25, le cadrage et l'horizon restent inchangés. */
+/* v0.3.27 — Petit croissant nocturne discret, 100 % CSS (aucune image).
+   Seul le croissant change : nuit v0.3.25, cadrage, horizon et luminosité inchangés. */
 body[data-period="night"] .weather-scene:before{
-  content:"☾";
+  content:"";
   display:block!important;
   position:absolute;
-  z-index:4;
-  top:11%;
-  right:17%;
-  color:rgba(255,250,225,.88);
-  font-size:clamp(20px,2.5vw,34px);
-  line-height:1;
-  font-family:Arial,"Noto Sans Symbols 2","Segoe UI Symbol",sans-serif;
-  font-weight:400;
-  text-shadow:0 0 5px rgba(255,245,205,.28);
+  z-index:6;
+  top:12%;
+  right:18%;
+  width:18px;
+  height:18px;
+  border-radius:50%;
+  background:transparent!important;
+  box-shadow:-5px 1px 0 1px rgba(255,248,214,.86), -6px 1px 7px rgba(255,245,205,.16);
+  opacity:1!important;
   pointer-events:none;
 }
 body:not([data-period="night"]) .weather-scene:before{
