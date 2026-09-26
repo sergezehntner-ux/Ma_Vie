@@ -77,7 +77,8 @@ function displayAgendaTitle(e){
 function allDayHtml(e){
  return `<div class="appointment all-day compact-row"><time>${kind(e)}</time><div><strong>${esc(displayAgendaTitle(e))}</strong>${e.place?`<small>${esc(e.place)}</small>`:''}</div></div>`
 }
-function agendaDetails(e){return [e.place,e.description].map(x=>(x||'').trim()).filter(Boolean).join(' · ')}
+function cleanAgendaDescription(value){return (value||'').trim().replace(/^\s*\[[^\]\r\n]+\]\s*/, '').trim()}
+function agendaDetails(e){return [e.place,cleanAgendaDescription(e.description)].map(x=>(x||'').trim()).filter(Boolean).join(' · ')}
 function timedTodayHtml(e){const d=agendaDetails(e);return `<div class="appointment timed-agenda compact-row"><time>${hm(e.start)}</time><strong class="appointment-title">${esc(e.title)}</strong><span class="appointment-end">jusqu’à ${hm(e.end)}</span>${d?'<span class="appointment-pin" aria-hidden="true">📍</span>':''}${d?`<small class="appointment-place">${esc(d)}</small>`:''}</div>`}
 function tomorrowHtml(e){
  if(e.allDay)return allDayHtml(e);
