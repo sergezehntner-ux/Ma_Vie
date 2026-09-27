@@ -152,10 +152,8 @@ jobs:
           <?xml version="1.0" encoding="utf-8"?>
           <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:id="@+id/widget_root" android:layout_width="match_parent" android:layout_height="match_parent"
-              android:padding="8dp" android:background="@drawable/widget_frame">
-              <ImageView android:id="@+id/weather_background" android:layout_width="match_parent" android:layout_height="match_parent" android:scaleType="centerCrop"/>
-              <ImageView android:id="@+id/widget_moon" android:layout_width="24dp" android:layout_height="24dp" android:layout_gravity="top|right" android:layout_marginTop="42dp" android:layout_marginRight="64dp" android:visibility="gone"/>
-              <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:padding="8dp">
+              android:padding="8dp" android:background="@android:color/transparent">
+<LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:padding="8dp">
                   <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
                       <TextView android:id="@+id/widget_place" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Ursy" android:textColor="#FFFFFFFF" android:textSize="20sp" android:textStyle="bold"/>
                       <TextView android:id="@+id/widget_temp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="--°" android:textColor="#FFFFFFFF" android:textSize="20sp" android:textStyle="bold"/>
@@ -580,10 +578,7 @@ jobs:
                       val cal=PendingIntent.getActivity(context,11,Intent(Intent.ACTION_VIEW,calUri),PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
                       ids.forEach{id->
                           val v=RemoteViews(context.packageName,R.layout.ma_vie_widget)
-                          v.setTextViewText(R.id.widget_place,shownPlace); v.setTextViewText(R.id.widget_temp,weather.first); v.setImageViewBitmap(R.id.weather_background,bg)
                           val isNight=weather.second>=1000
-                          v.setViewVisibility(R.id.widget_moon,if(isNight)View.VISIBLE else View.GONE)
-                          if(isNight)v.setImageViewBitmap(R.id.widget_moon,moonBitmap())
                           v.setTextViewText(R.id.widget_know,ev.second)
                           v.setTextViewText(R.id.widget_glucose, if(libre?.optBoolean("ok")==true) "🩸 %.1f mmol/L %s".format(Locale.US,libre.optDouble("mmol"),libre.optString("arrow")) else "🩸 Glycémie —")
                           v.setTextViewText(R.id.widget_enyaq,if(enyaq?.optBoolean("ok")==true) "🚙 %.0f %% · %.0f km".format(Locale.US,enyaq.optDouble("percent"),enyaq.optDouble("km")) else "🚙 Enyaq —")
@@ -834,5 +829,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Ma_Vie_Android_v0.3.31_Test_wallpaper_direct
+          name: Ma_Vie_Android_v0.3.32_Widgets_sans_images
           path: android/app/build/outputs/apk/release/app-release.apk
