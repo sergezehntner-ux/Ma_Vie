@@ -793,7 +793,7 @@ jobs:
                               document.head.appendChild(s);
                             }
                             var ver=document.querySelector('.version');
-                            if(ver) ver.textContent='v0.3.31 · Test wallpaper direct';
+                            if(ver) ver.textContent='v0.3.32 · Stockage sécurisé';
                           })();"""
                           v.evaluateJavascript(js,null)
                       }
