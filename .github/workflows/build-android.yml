@@ -217,8 +217,8 @@ jobs:
           cat > android/app/src/main/res/values/styles.xml <<'EOF'
           <resources>
               <style name="Theme.MaVie" parent="Theme.AppCompat.DayNight.NoActionBar">
-                  <item name="android:windowIsTranslucent">true</item>
                   <item name="android:windowBackground">@android:color/transparent</item>
+                  <item name="android:windowShowWallpaper">true</item>
                   <item name="android:backgroundDimEnabled">false</item>
                   <item name="android:windowNoTitle">true</item>
                   <item name="android:windowLightStatusBar">false</item>
@@ -755,6 +755,7 @@ jobs:
           import android.os.Bundle
           import android.graphics.Color
           import android.graphics.drawable.ColorDrawable
+          import android.view.WindowManager
           import android.webkit.WebResourceRequest
           import android.webkit.WebView
           import android.webkit.WebViewClient
@@ -772,6 +773,7 @@ jobs:
               fun refreshLibre(){runOnUiThread{webView.evaluateJavascript("window.maVieRefreshLibre&&window.maVieRefreshLibre()",null)}}
               override fun onCreate(savedInstanceState:Bundle?){
                   super.onCreate(savedInstanceState)
+                  window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER)
                   window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
                   setContentView(R.layout.activity_main);webView=findViewById(R.id.webView)
                   webView.setBackgroundColor(Color.TRANSPARENT)
@@ -797,7 +799,7 @@ jobs:
                               document.head.appendChild(s);
                             }
                             var ver=document.querySelector('.version');
-                            if(ver) ver.textContent='v0.3.30 · Test fond Android';
+                            if(ver) ver.textContent='v0.3.31 · Test wallpaper direct';
                           })();"""
                           v.evaluateJavascript(js,null)
                       }
@@ -832,5 +834,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Ma_Vie_Android_v0.3.30_Test_fond_Android
+          name: Ma_Vie_Android_v0.3.31_Test_wallpaper_direct
           path: android/app/build/outputs/apk/release/app-release.apk
