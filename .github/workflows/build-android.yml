@@ -65,8 +65,8 @@ jobs:
                   applicationId = "ch.sergezehntner.mavie"
                   minSdk = 26
                   targetSdk = 35
-                  versionCode = 221
-                  versionName = "0.3.0.12"
+                  versionCode = 222
+                  versionName = "0.3.0.13"
               }
               signingConfigs {
                   create("release") {
@@ -87,6 +87,8 @@ jobs:
               implementation("androidx.core:core-ktx:1.15.0")
               implementation("androidx.appcompat:appcompat:1.7.0")
               implementation("androidx.activity:activity-ktx:1.10.0")
+              implementation("androidx.car.app:app:1.7.0")
+              implementation("androidx.car.app:app-projected:1.7.0")
           }
           EOF
 
@@ -109,7 +111,7 @@ jobs:
           cp meteo-storm.jpg android/app/src/main/res/drawable-nodpi/meteo_storm.jpg
           cp meteo-night-stars.jpg android/app/src/main/res/drawable-nodpi/meteo_night_stars.jpg
           cp meteo-night-moon.jpg android/app/src/main/res/drawable-nodpi/meteo_night_moon.jpg
-          mkdir -p android/app/src/main/res/raw
+          mkdir -p android/app/src/main/res/raw android/app/src/main/res/xml
           cp meteo-suisse-fictive.json android/app/src/main/res/raw/meteo_suisse_fictive.json
 
           cat > android/app/src/main/AndroidManifest.xml <<'EOF'
@@ -122,6 +124,14 @@ jobs:
                   <package android:name="cz.skodaauto.myskoda"/>
               </queries>
               <application android:label="Ma Vie" android:icon="@drawable/ic_launcher" android:roundIcon="@drawable/ic_launcher" android:usesCleartextTraffic="false" android:theme="@style/Theme.MaVie">
+                  <meta-data android:name="com.google.android.gms.car.application" android:resource="@xml/automotive_app_desc"/>
+                  <meta-data android:name="androidx.car.app.minCarApiLevel" android:value="7"/>
+                  <service android:name=".MaVieCarAppService" android:exported="true">
+                      <intent-filter>
+                          <action android:name="androidx.car.app.CarAppService"/>
+                          <category android:name="androidx.car.app.category.WEATHER"/>
+                      </intent-filter>
+                  </service>
                   <activity android:name=".MainActivity" android:exported="true">
                       <intent-filter>
                           <action android:name="android.intent.action.MAIN"/>
@@ -137,6 +147,12 @@ jobs:
                   </receiver>
               </application>
           </manifest>
+          EOF
+
+          cat > android/app/src/main/res/xml/automotive_app_desc.xml <<'EOF'
+          <automotiveApp>
+              <uses name="template"/>
+          </automotiveApp>
           EOF
 
           cat > android/app/src/main/res/layout/activity_main.xml <<'EOF'
@@ -741,6 +757,105 @@ jobs:
           }
           EOF
 
+          cat > android/app/src/main/java/ch/sergezehntner/mavie/MaVieCarAppService.kt <<'EOF'
+          package ch.sergezehntner.mavie
+
+          import android.Manifest
+          import android.content.pm.PackageManager
+          import android.location.Location
+          import android.location.LocationManager
+          import androidx.car.app.CarAppService
+          import androidx.car.app.CarContext
+          import androidx.car.app.Screen
+          import androidx.car.app.Session
+          import androidx.car.app.model.Action
+          import androidx.car.app.model.Header
+          import androidx.car.app.model.Pane
+          import androidx.car.app.model.PaneTemplate
+          import androidx.car.app.model.Row
+          import androidx.car.app.model.Template
+          import androidx.car.app.validation.HostValidator
+          import androidx.core.content.ContextCompat
+          import org.json.JSONObject
+          import java.net.URL
+          import java.util.concurrent.Executors
+
+          class MaVieCarAppService : CarAppService() {
+              override fun createHostValidator(): HostValidator = HostValidator.ALLOW_ALL_HOSTS_VALIDATOR
+              override fun onCreateSession(): Session = MaVieCarSession()
+          }
+
+          class MaVieCarSession : Session() {
+              override fun onCreateScreen(intent: android.content.Intent): Screen = MaVieWeatherScreen(carContext)
+          }
+
+          class MaVieWeatherScreen(carContext: CarContext) : Screen(carContext) {
+              private val executor = Executors.newSingleThreadExecutor()
+              @Volatile private var weather: WeatherData? = null
+              @Volatile private var error: String? = null
+              private var requested = false
+
+              override fun onGetTemplate(): Template {
+                  if (!requested) {
+                      requested = true
+                      loadWeather()
+                  }
+                  val pane = Pane.Builder()
+                  val w = weather
+                  when {
+                      w != null -> {
+                          pane.addRow(Row.Builder().setTitle("${w.temperature}° · ${w.description}").addText(w.place).build())
+                          pane.addRow(Row.Builder().setTitle("Ma Vie").addText("Météo actuelle · mise à jour automatique").build())
+                      }
+                      error != null -> pane.addRow(Row.Builder().setTitle("Météo indisponible").addText(error!!).build())
+                      else -> pane.addRow(Row.Builder().setTitle("Météo").addText("Chargement…").build())
+                  }
+                  val header = Header.Builder().setTitle("Ma Vie").setStartHeaderAction(Action.APP_ICON).build()
+                  return PaneTemplate.Builder(pane.build()).setHeader(header).build()
+              }
+
+              private fun loadWeather() {
+                  executor.execute {
+                      try {
+                          val loc = lastLocation() ?: throw IllegalStateException("Ouvrez Ma Vie sur le téléphone pour autoriser la localisation.")
+                          val u = "https://api.open-meteo.com/v1/forecast?latitude=${loc.latitude}&longitude=${loc.longitude}&current=temperature_2m,weather_code&timezone=auto&forecast_days=1"
+                          val json = JSONObject(URL(u).readText())
+                          val current = json.getJSONObject("current")
+                          val temp = kotlin.math.round(current.getDouble("temperature_2m")).toInt()
+                          val code = current.getInt("weather_code")
+                          weather = WeatherData(temp, wmo(code), "Position actuelle")
+                      } catch (t: Throwable) {
+                          error = t.message ?: "Réessayez dans quelques instants."
+                      }
+                      carContext.mainExecutor.execute { invalidate() }
+                  }
+              }
+
+              private fun lastLocation(): Location? {
+                  val fine = ContextCompat.checkSelfPermission(carContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                  val coarse = ContextCompat.checkSelfPermission(carContext, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                  if (!fine && !coarse) return null
+                  val lm = carContext.getSystemService(android.content.Context.LOCATION_SERVICE) as LocationManager
+                  return lm.getProviders(true).mapNotNull { p -> runCatching { lm.getLastKnownLocation(p) }.getOrNull() }.maxByOrNull { it.time }
+              }
+
+              private fun wmo(code: Int): String = when (code) {
+                  0 -> "Ciel dégagé"
+                  1 -> "Plutôt dégagé"
+                  2 -> "Partiellement nuageux"
+                  3 -> "Couvert"
+                  45,48 -> "Brouillard"
+                  51,53,55,56,57 -> "Bruine"
+                  61,63,65,66,67,80,81,82 -> "Pluie"
+                  71,73,75,77,85,86 -> "Neige"
+                  95,96,99 -> "Orage"
+                  else -> "Conditions météo"
+              }
+          }
+
+          data class WeatherData(val temperature: Int, val description: String, val place: String)
+          EOF
+
           cat > android/app/src/main/java/ch/sergezehntner/mavie/MainActivity.kt <<'EOF'
           package ch.sergezehntner.mavie
           import android.Manifest
@@ -828,5 +943,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Ma_Vie_Android_v0.3.33_Widgets_cadre_verre
+          name: Ma_Vie_Android_v0.3.34_Android_Auto_meteo
           path: android/app/build/outputs/apk/release/app-release.apk
