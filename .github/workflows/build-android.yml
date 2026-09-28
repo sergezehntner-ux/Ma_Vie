@@ -180,15 +180,15 @@ jobs:
                       <TextView android:id="@+id/widget_now_empty" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#FFFFFFFF" android:textSize="13sp" android:text="Plus de rendez-vous prévu aujourd’hui."/>
                       <LinearLayout android:id="@+id/event1" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
                           <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal"><TextView android:id="@+id/event1_start" android:layout_width="52dp" android:layout_height="wrap_content" android:textColor="#FFFFFFFF" android:textSize="13sp"/><TextView android:id="@+id/event1_title" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textColor="#FFFFFFFF" android:textSize="13sp" android:textStyle="bold" android:maxLines="1" android:ellipsize="end"/><TextView android:id="@+id/event1_endwide" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#CCFFFFFF" android:textSize="13sp"/></LinearLayout>
-                          <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal"><TextView android:id="@+id/event1_place" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textColor="#BFFFFFFF" android:textSize="12sp" android:maxLines="1"/></LinearLayout><TextView android:id="@+id/event1_endnarrow" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/><TextView android:id="@+id/event1_desc" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/>
+                          <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal"><Space android:layout_width="52dp" android:layout_height="1dp"/><TextView android:id="@+id/event1_place" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textColor="#BFFFFFFF" android:textSize="12sp" android:maxLines="1"/></LinearLayout><TextView android:id="@+id/event1_endnarrow" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/><TextView android:id="@+id/event1_desc" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/>
                       </LinearLayout>
                       <LinearLayout android:id="@+id/event2" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
                           <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal"><TextView android:id="@+id/event2_start" android:layout_width="52dp" android:layout_height="wrap_content" android:textColor="#FFFFFFFF" android:textSize="13sp"/><TextView android:id="@+id/event2_title" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textColor="#FFFFFFFF" android:textSize="13sp" android:textStyle="bold" android:maxLines="1" android:ellipsize="end"/><TextView android:id="@+id/event2_endwide" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#CCFFFFFF" android:textSize="13sp"/></LinearLayout>
-                          <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal"><TextView android:id="@+id/event2_place" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textColor="#BFFFFFFF" android:textSize="12sp" android:maxLines="1"/></LinearLayout><TextView android:id="@+id/event2_endnarrow" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/><TextView android:id="@+id/event2_desc" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/>
+                          <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal"><Space android:layout_width="52dp" android:layout_height="1dp"/><TextView android:id="@+id/event2_place" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textColor="#BFFFFFFF" android:textSize="12sp" android:maxLines="1"/></LinearLayout><TextView android:id="@+id/event2_endnarrow" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/><TextView android:id="@+id/event2_desc" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/>
                       </LinearLayout>
                       <LinearLayout android:id="@+id/event3" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
                           <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal"><TextView android:id="@+id/event3_start" android:layout_width="52dp" android:layout_height="wrap_content" android:textColor="#FFFFFFFF" android:textSize="13sp"/><TextView android:id="@+id/event3_title" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textColor="#FFFFFFFF" android:textSize="13sp" android:textStyle="bold" android:maxLines="1" android:ellipsize="end"/><TextView android:id="@+id/event3_endwide" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#CCFFFFFF" android:textSize="13sp"/></LinearLayout>
-                          <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal"><TextView android:id="@+id/event3_place" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textColor="#BFFFFFFF" android:textSize="12sp" android:maxLines="1"/></LinearLayout><TextView android:id="@+id/event3_endnarrow" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/><TextView android:id="@+id/event3_desc" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/>
+                          <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal"><Space android:layout_width="52dp" android:layout_height="1dp"/><TextView android:id="@+id/event3_place" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textColor="#BFFFFFFF" android:textSize="12sp" android:maxLines="1"/></LinearLayout><TextView android:id="@+id/event3_endnarrow" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/><TextView android:id="@+id/event3_desc" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/>
                       </LinearLayout>
                   </LinearLayout>
                   <LinearLayout android:id="@+id/card_know" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="9dp" android:layout_marginBottom="5dp" android:background="@drawable/widget_card">
@@ -247,6 +247,11 @@ jobs:
           import android.content.Context
           import android.provider.CalendarContract
           import android.location.LocationManager
+          import android.location.Location
+          import android.os.Build
+          import android.os.CancellationSignal
+          import java.util.concurrent.CountDownLatch
+          import java.util.concurrent.TimeUnit
           import android.content.pm.PackageManager
           import androidx.core.content.ContextCompat
           import android.webkit.JavascriptInterface
@@ -528,6 +533,11 @@ jobs:
           import android.graphics.*
           import android.location.Geocoder
           import android.location.LocationManager
+          import android.location.Location
+          import android.os.Build
+          import android.os.CancellationSignal
+          import java.util.concurrent.CountDownLatch
+          import java.util.concurrent.TimeUnit
           import android.provider.CalendarContract
           import android.widget.RemoteViews
           import android.view.View
@@ -610,7 +620,16 @@ jobs:
 
                   private fun lastLocation(c:Context):Pair<Double?,Double?> { return try{
                       val lm=c.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-                      val l=lm.getProviders(true).mapNotNull{try{lm.getLastKnownLocation(it)}catch(_:SecurityException){null}}.maxByOrNull{it.time}
+                      var fresh:Location?=null
+                      if(Build.VERSION.SDK_INT>=30){
+                          val provider=when{lm.isProviderEnabled(LocationManager.GPS_PROVIDER)->LocationManager.GPS_PROVIDER;lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER)->LocationManager.NETWORK_PROVIDER;else->null}
+                          if(provider!=null){
+                              val latch=CountDownLatch(1); val cancel=CancellationSignal()
+                              try{lm.getCurrentLocation(provider,cancel,c.mainExecutor){loc->fresh=loc;latch.countDown()};latch.await(4,TimeUnit.SECONDS);cancel.cancel()}catch(_:Exception){}
+                          }
+                      }
+                      val cached=lm.getProviders(true).mapNotNull{try{lm.getLastKnownLocation(it)}catch(_:SecurityException){null}}.maxByOrNull{it.time}
+                      val l=fresh ?: cached
                       Pair(l?.latitude,l?.longitude)
                   }catch(_:Exception){Pair(null,null)} }
 
@@ -727,7 +746,7 @@ jobs:
                       val end=tomorrowStart-1
                       val uri=CalendarContract.Instances.CONTENT_URI.buildUpon().also{android.content.ContentUris.appendId(it,todayStart);android.content.ContentUris.appendId(it,end)}.build()
                       val p=arrayOf(CalendarContract.Instances.TITLE,CalendarContract.Instances.BEGIN,CalendarContract.Instances.END,CalendarContract.Instances.EVENT_LOCATION,CalendarContract.Instances.ALL_DAY,CalendarContract.Instances.DESCRIPTION)
-                      val timed=mutableListOf<WidgetEvent>(); val periods=mutableListOf<String>(); val events=mutableListOf<String>(); val important=mutableListOf<String>(); val tf=SimpleDateFormat("HH:mm",Locale.getDefault())
+                      val timed=mutableListOf<WidgetEvent>(); val weeks=mutableListOf<String>(); val periods=mutableListOf<String>(); val events=mutableListOf<String>(); val important=mutableListOf<String>(); val tf=SimpleDateFormat("HH:mm",Locale.getDefault())
                       try{c.contentResolver.query(uri,p,null,null,CalendarContract.Instances.BEGIN+" ASC")?.use{q->while(q.moveToNext()){
                           val title=q.getString(0)?:""; val start=q.getLong(1); val stop=q.getLong(2); val loc=q.getString(3)?:""; val all=q.getInt(4)==1; val desc=q.getString(5)?:""
                           if(all){
@@ -741,7 +760,9 @@ jobs:
                               if(!today.isBefore(startDate) && today.isBefore(endDateExclusive)){
                                   val days=java.time.temporal.ChronoUnit.DAYS.between(startDate,endDateExclusive).toInt().coerceAtLeast(1)
                                   val birthday=Regex("anniversaire|birthday",RegexOption.IGNORE_CASE).containsMatchIn(title)
-                                  if(days>1){
+                                  val isWeek=Regex("^\\s*semaine\\s+\\d{1,2}\\b",RegexOption.IGNORE_CASE).containsMatchIn(title)
+                                  if(isWeek) weeks.add("• "+title)
+                                  else if(days>1){
                                       val day=(java.time.temporal.ChronoUnit.DAYS.between(startDate,today).toInt()+1).coerceIn(1,days)
                                       periods.add("🏖️ "+title+" (jour $day/$days)")
                                   } else if(birthday) important.add("🎂 "+title)
@@ -750,7 +771,7 @@ jobs:
                           }
                           else if(stop>=now && start<=end){ if(timed.size<3) timed.add(WidgetEvent(tf.format(Date(start)),tf.format(Date(stop)),title,loc,desc)) }
                       }}}catch(_:Exception){}
-                      val know=(periods+events+important).take(3)
+                      val know=(weeks+periods+events+important).take(3)
                       return Pair(timed,if(know.isEmpty())"Rien de particulier aujourd’hui." else know.joinToString("\n"))
                   }
               }
@@ -764,6 +785,11 @@ jobs:
           import android.content.pm.PackageManager
           import android.location.Location
           import android.location.LocationManager
+          import android.location.Location
+          import android.os.Build
+          import android.os.CancellationSignal
+          import java.util.concurrent.CountDownLatch
+          import java.util.concurrent.TimeUnit
           import androidx.car.app.CarAppService
           import androidx.car.app.CarContext
           import androidx.car.app.Screen
