@@ -47,9 +47,10 @@
  function dayStamp(d){return new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime()}
  function spanInfo(e,day){const one=86400000,start=dayStamp(e.start),end=dayStamp(e.end),cur=dayStamp(day),total=Math.max(1,Math.round((end-start)/one));if(total<=1)return null;const n=Math.floor((cur-start)/one)+1;return n>=1&&n<=total?{n,total}:null}
  function dayEvents(day){const d=dayStamp(day);return events().filter(e=>e.allDay&&d>=dayStamp(e.start)&&d<dayStamp(e.end)).sort((a,b)=>eventRank(a)-eventRank(b))}
- function eventRank(e){if(spanInfo(e,e.start))return 0;return classify(e).family==='date-importante'?2:1}
+ function isWeek(e){return /^\s*semaine\s+\d{1,2}\b/i.test(e.title)}
+ function eventRank(e){if(isWeek(e))return -1;if(spanInfo(e,e.start))return 0;return classify(e).family==='date-importante'?2:1}
  function eventDisplayTitle(e,day){const sp=spanInfo(e,day);return sp&&!/\(jour\s+\d+\s*\/\s*\d+\)/i.test(e.title)?`${e.title} (jour ${sp.n}/${sp.total})`:e.title}
- function eventHtml(e,day){const c=classify(e),title=eventDisplayTitle(e,day);return `<div class="mv-info"><span class="mv-info-icon">${c.icon}</span><div class="mv-info-text"><strong>${esc(title)}</strong>${e.place?`<small>${esc(e.place)}</small>`:''}</div><button class="mv-idea" type="button">Une idée&nbsp;?</button></div>`}
+ function eventHtml(e,day){const c=classify(e),title=eventDisplayTitle(e,day),week=isWeek(e);return `<div class="mv-info${week?' mv-info-week':''}"><span class="mv-info-icon">${c.icon}</span><div class="mv-info-text"><strong>${esc(title)}</strong>${e.place?`<small>${esc(e.place)}</small>`:''}</div>${week?'':`<button class="mv-idea" type="button">Une idée&nbsp;?</button>`}</div>`}
  function renderAgendaMessages(){
   const now=new Date(),tom=new Date(now);tom.setDate(tom.getDate()+1);
   [['#todayAppointments',now,true],['#tomorrowAppointments',tom,false]].forEach(([sel,day,isToday])=>{const box=document.querySelector(sel);if(!box)return;box.querySelectorAll('.appointment.all-day').forEach(x=>x.remove());box.querySelectorAll('.agenda-empty-message').forEach(x=>x.remove());const timed=box.querySelectorAll('.appointment:not(.all-day)').length;if(!timed){const m=document.createElement('div');m.className='appointment compact-row agenda-empty-message';m.innerHTML=`<time></time><div><strong>${isToday?'Plus de rendez-vous prévu aujourd’hui.':'Aucun rendez-vous prévu pour ce jour.'}</strong></div>`;box.appendChild(m);box.classList.remove('hidden')}})
@@ -59,7 +60,7 @@
   const groups=[{day:today,label:'AUJOURD’HUI',ev:dayEvents(today)},{day:tomorrow,label:'DEMAIN',ev:dayEvents(tomorrow)}];
   let html=`<div class="mv-tourism"><button id="proposalToday" type="button">Aujourd’hui</button><span>Envie d’une proposition&nbsp;?</span><button id="proposalTomorrow" type="button">Demain</button></div>`;
   html+=`<div class="mv-days-grid"><div class="mv-day-info mv-day-today"><div class="mv-day-label">AUJOURD’HUI</div>${groups[0].ev.map(e=>eventHtml(e,groups[0].day)).join('')}</div><div class="mv-day-info mv-day-tomorrow"><div class="mv-day-label">DEMAIN</div>${groups[1].ev.map(e=>eventHtml(e,groups[1].day)).join('')}</div></div>`;box.innerHTML=html;
-  let idx=0;groups.forEach(g=>g.ev.forEach(e=>{const b=box.querySelectorAll('.mv-idea')[idx++];const c=classify(e);if(b)b.onclick=()=>openProposal(g.day,{title:e.title,place:e.place,icon:c.icon,kind:c.kind})}));
+  let idx=0;groups.forEach(g=>g.ev.forEach(e=>{if(isWeek(e))return;const b=box.querySelectorAll('.mv-idea')[idx++];const c=classify(e);if(b)b.onclick=()=>openProposal(g.day,{title:e.title,place:e.place,icon:c.icon,kind:c.kind})}));
   box.querySelector('#proposalToday')?.addEventListener('click',()=>openProposal(today));box.querySelector('#proposalTomorrow')?.addEventListener('click',()=>openProposal(tomorrow));
   renderAgendaMessages();card.classList.remove('hidden');window.dispatchEvent(new Event('mavie-content-change'));
  }
