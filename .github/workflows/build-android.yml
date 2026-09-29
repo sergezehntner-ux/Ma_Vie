@@ -65,8 +65,8 @@ jobs:
                   applicationId = "ch.sergezehntner.mavie"
                   minSdk = 26
                   targetSdk = 35
-                  versionCode = 223
-                  versionName = "0.3.0.14"
+                  versionCode = 224
+                  versionName = "0.3.0.15"
               }
               signingConfigs {
                   create("release") {
@@ -760,12 +760,14 @@ jobs:
                               if(!today.isBefore(startDate) && today.isBefore(endDateExclusive)){
                                   val days=java.time.temporal.ChronoUnit.DAYS.between(startDate,endDateExclusive).toInt().coerceAtLeast(1)
                                   val birthday=Regex("anniversaire|birthday",RegexOption.IGNORE_CASE).containsMatchIn(title)
+                                  val vacation=Regex("vacances?|holiday|ferien",RegexOption.IGNORE_CASE).containsMatchIn(title)
                                   val isWeek=Regex("^\\s*semaine\\s+\\d{1,2}\\b",RegexOption.IGNORE_CASE).containsMatchIn(title)
                                   if(isWeek) weeks.add("• "+title)
                                   else if(days>1){
                                       val day=(java.time.temporal.ChronoUnit.DAYS.between(startDate,today).toInt()+1).coerceIn(1,days)
                                       periods.add("🏖️ "+title+" (jour $day/$days)")
-                                  } else if(birthday) important.add("🎂 "+title)
+                                  } else if(vacation) periods.add("🏖️ "+title)
+                                  else if(birthday) important.add("🎂 "+title)
                                   else events.add("• "+title)
                               }
                           }
@@ -968,5 +970,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Ma_Vie_Android_v0.3.34_Android_Auto_meteo
+          name: Ma_Vie_Android_v0.3.35_Android_Auto_meteo
           path: android/app/build/outputs/apk/release/app-release.apk
