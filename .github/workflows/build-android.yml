@@ -65,8 +65,8 @@ jobs:
                   applicationId = "ch.sergezehntner.mavie"
                   minSdk = 26
                   targetSdk = 35
-                  versionCode = 223
-                  versionName = "0.3.0.14"
+                  versionCode = 225
+                  versionName = "0.3.0.16"
               }
               signingConfigs {
                   create("release") {
@@ -994,5 +994,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Ma_Vie_Android_v0.3.34_Android_Auto_meteo
+          name: Ma_Vie_Android_v0.3.37_Android_Auto_meteo
           path: android/app/build/outputs/apk/release/app-release.apk
