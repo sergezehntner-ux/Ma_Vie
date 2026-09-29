@@ -65,8 +65,8 @@ jobs:
                   applicationId = "ch.sergezehntner.mavie"
                   minSdk = 26
                   targetSdk = 35
-                  versionCode = 224
-                  versionName = "0.3.0.15"
+                  versionCode = 223
+                  versionName = "0.3.0.14"
               }
               signingConfigs {
                   create("release") {
@@ -120,6 +120,7 @@ jobs:
               <uses-permission android:name="android.permission.READ_CALENDAR"/>
               <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
               <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+          <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
               <queries>
                   <package android:name="cz.skodaauto.myskoda"/>
               </queries>
@@ -141,6 +142,10 @@ jobs:
                   <receiver android:name=".MaVieWidgetProvider" android:exported="true">
                       <intent-filter>
                           <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+                      <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                      <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+                      <action android:name="android.intent.action.TIME_SET"/>
+                      <action android:name="android.intent.action.TIMEZONE_CHANGED"/>
                           <action android:name="android.intent.action.USER_PRESENT"/>
                       </intent-filter>
                       <meta-data android:name="android.appwidget.provider" android:resource="@xml/ma_vie_widget_info"/>
@@ -551,16 +556,37 @@ jobs:
           import kotlin.concurrent.thread
 
           class MaVieWidgetProvider : AppWidgetProvider() {
-              override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) = refresh(context,0)
-              override fun onEnabled(context: Context) = refresh(context,0)
+              override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) { schedulePeriodic(context); refresh(context,0) }
+              override fun onEnabled(context: Context) { schedulePeriodic(context); refresh(context,0) }
+              override fun onDisabled(context: Context) { cancelPeriodic(context) }
               override fun onReceive(context: Context, intent: Intent) {
                   super.onReceive(context,intent)
-                  if(intent.action==Intent.ACTION_USER_PRESENT) refresh(context,0)
-                  if(intent.action==ACTION_RETRY) refresh(context,intent.getIntExtra("attempt",1))
+                  when(intent.action){
+                      ACTION_PERIODIC -> { refresh(context,0); schedulePeriodic(context) }
+                      ACTION_RETRY -> refresh(context,intent.getIntExtra("attempt",1))
+                      Intent.ACTION_USER_PRESENT, Intent.ACTION_BOOT_COMPLETED, Intent.ACTION_MY_PACKAGE_REPLACED, Intent.ACTION_TIME_CHANGED, Intent.ACTION_TIMEZONE_CHANGED -> { schedulePeriodic(context); refresh(context,0) }
+                  }
               }
 
               companion object {
                   private const val ACTION_RETRY="ch.sergezehntner.mavie.WIDGET_RETRY"
+                  private const val ACTION_PERIODIC="ch.sergezehntner.mavie.WIDGET_PERIODIC"
+                  private const val PERIODIC_MS=15*60*1000L
+
+                  private fun periodicIntent(context:Context)=PendingIntent.getBroadcast(
+                      context,199,Intent(context,MaVieWidgetProvider::class.java).setAction(ACTION_PERIODIC),
+                      PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+
+                  private fun schedulePeriodic(context:Context){
+                      val alarm=context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                      alarm.setAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP,android.os.SystemClock.elapsedRealtime()+PERIODIC_MS,periodicIntent(context))
+                  }
+
+                  private fun cancelPeriodic(context:Context){
+                      val alarm=context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                      alarm.cancel(periodicIntent(context))
+                  }
+
                   fun refresh(context: Context, attempt:Int=0) {
                       thread {
                           try {
@@ -760,14 +786,12 @@ jobs:
                               if(!today.isBefore(startDate) && today.isBefore(endDateExclusive)){
                                   val days=java.time.temporal.ChronoUnit.DAYS.between(startDate,endDateExclusive).toInt().coerceAtLeast(1)
                                   val birthday=Regex("anniversaire|birthday",RegexOption.IGNORE_CASE).containsMatchIn(title)
-                                  val vacation=Regex("vacances?|holiday|ferien",RegexOption.IGNORE_CASE).containsMatchIn(title)
                                   val isWeek=Regex("^\\s*semaine\\s+\\d{1,2}\\b",RegexOption.IGNORE_CASE).containsMatchIn(title)
                                   if(isWeek) weeks.add("• "+title)
                                   else if(days>1){
                                       val day=(java.time.temporal.ChronoUnit.DAYS.between(startDate,today).toInt()+1).coerceIn(1,days)
                                       periods.add("🏖️ "+title+" (jour $day/$days)")
-                                  } else if(vacation) periods.add("🏖️ "+title)
-                                  else if(birthday) important.add("🎂 "+title)
+                                  } else if(birthday) important.add("🎂 "+title)
                                   else events.add("• "+title)
                               }
                           }
@@ -970,5 +994,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Ma_Vie_Android_v0.3.35_Android_Auto_meteo
+          name: Ma_Vie_Android_v0.3.34_Android_Auto_meteo
           path: android/app/build/outputs/apk/release/app-release.apk
