@@ -1,4 +1,4 @@
-name: Build Ma Vie Android APK
+name: Build Ma Vie Android APK + AAB
 
 on:
   workflow_dispatch:
@@ -24,7 +24,7 @@ jobs:
       - name: Create Android project
         shell: bash
         run: |
-          mkdir -p android/app/src/main/java/ch/sergezehntner/mavie
+          mkdir -p android/app/src/main/java/ch/sz/mavie
           mkdir -p android/app/src/main/res/layout android/app/src/main/res/values android/app/src/main/res/drawable android/app/src/main/res/drawable-nodpi android/app/src/main/res/xml
 
           cat > android/gradle.properties <<'EOF'
@@ -55,14 +55,14 @@ jobs:
               id("org.jetbrains.kotlin.android")
           }
           android {
-              namespace = "ch.sergezehntner.mavie"
+              namespace = "ch.sz.mavie"
               compileOptions {
                  sourceCompatibility = JavaVersion.VERSION_17
                  targetCompatibility = JavaVersion.VERSION_17
               }
               compileSdk = 35
               defaultConfig {
-                  applicationId = "ch.sergezehntner.mavie"
+                  applicationId = "ch.sz.mavie"
                   minSdk = 26
                   targetSdk = 35
                   versionCode = 225
@@ -247,8 +247,8 @@ jobs:
           </resources>
           EOF
 
-          cat > android/app/src/main/java/ch/sergezehntner/mavie/CalendarBridge.kt <<'EOF'
-          package ch.sergezehntner.mavie
+          cat > android/app/src/main/java/ch/sz/mavie/CalendarBridge.kt <<'EOF'
+          package ch.sz.mavie
           import android.content.Context
           import android.provider.CalendarContract
           import android.location.LocationManager
@@ -315,8 +315,8 @@ jobs:
           }
           EOF
 
-          cat > android/app/src/main/java/ch/sergezehntner/mavie/SecretBox.kt <<'EOF'
-          package ch.sergezehntner.mavie
+          cat > android/app/src/main/java/ch/sz/mavie/SecretBox.kt <<'EOF'
+          package ch.sz.mavie
           import android.security.keystore.KeyGenParameterSpec
           import android.security.keystore.KeyProperties
           import android.util.Base64
@@ -350,8 +350,8 @@ jobs:
           }
           EOF
 
-          cat > android/app/src/main/java/ch/sergezehntner/mavie/EnyaqBridge.kt <<'EOF'
-          package ch.sergezehntner.mavie
+          cat > android/app/src/main/java/ch/sz/mavie/EnyaqBridge.kt <<'EOF'
+          package ch.sz.mavie
           import android.content.Context
           import android.content.Intent
           import android.app.Activity
@@ -398,8 +398,8 @@ jobs:
           }
           EOF
 
-          cat > android/app/src/main/java/ch/sergezehntner/mavie/LibreBridge.kt <<'EOF'
-          package ch.sergezehntner.mavie
+          cat > android/app/src/main/java/ch/sz/mavie/LibreBridge.kt <<'EOF'
+          package ch.sz.mavie
 
           import android.app.Activity
           import android.app.AlertDialog
@@ -525,8 +525,8 @@ jobs:
           }
           EOF
 
-          cat > android/app/src/main/java/ch/sergezehntner/mavie/MaVieWidgetProvider.kt <<'EOF'
-          package ch.sergezehntner.mavie
+          cat > android/app/src/main/java/ch/sz/mavie/MaVieWidgetProvider.kt <<'EOF'
+          package ch.sz.mavie
 
           import android.app.PendingIntent
           import android.app.AlarmManager
@@ -569,8 +569,8 @@ jobs:
               }
 
               companion object {
-                  private const val ACTION_RETRY="ch.sergezehntner.mavie.WIDGET_RETRY"
-                  private const val ACTION_PERIODIC="ch.sergezehntner.mavie.WIDGET_PERIODIC"
+                  private const val ACTION_RETRY="ch.sz.mavie.WIDGET_RETRY"
+                  private const val ACTION_PERIODIC="ch.sz.mavie.WIDGET_PERIODIC"
                   private const val PERIODIC_MS=15*60*1000L
 
                   private fun periodicIntent(context:Context)=PendingIntent.getBroadcast(
@@ -804,8 +804,8 @@ jobs:
           }
           EOF
 
-          cat > android/app/src/main/java/ch/sergezehntner/mavie/MaVieCarAppService.kt <<'EOF'
-          package ch.sergezehntner.mavie
+          cat > android/app/src/main/java/ch/sz/mavie/MaVieCarAppService.kt <<'EOF'
+          package ch.sz.mavie
 
           import android.Manifest
           import android.content.pm.PackageManager
@@ -907,8 +907,8 @@ jobs:
           data class WeatherData(val temperature: Int, val description: String, val place: String)
           EOF
 
-          cat > android/app/src/main/java/ch/sergezehntner/mavie/MainActivity.kt <<'EOF'
-          package ch.sergezehntner.mavie
+          cat > android/app/src/main/java/ch/sz/mavie/MainActivity.kt <<'EOF'
+          package ch.sz.mavie
           import android.Manifest
           import android.content.Intent
           import android.content.pm.PackageManager
@@ -984,15 +984,17 @@ jobs:
         run: |
           echo "$MAVIE_KEYSTORE_BASE64" | base64 --decode > android/mavie-release.jks
 
-      - name: Build signed APK
+      - name: Build signed APK + AAB
         env:
           MAVIE_KEYSTORE_PASSWORD: ${{ secrets.MAVIE_KEYSTORE_PASSWORD }}
           MAVIE_KEY_ALIAS: ${{ secrets.MAVIE_KEY_ALIAS }}
           MAVIE_KEY_PASSWORD: ${{ secrets.MAVIE_KEY_PASSWORD }}
-        run: gradle -p android assembleRelease
+        run: gradle -p android assembleRelease bundleRelease
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Ma_Vie_Android_v0.3.37_Android_Auto_meteo
-          path: android/app/build/outputs/apk/release/app-release.apk
+          path: |
+            android/app/build/outputs/apk/release/app-release.apk
+            android/app/build/outputs/bundle/release/app-release.aab
