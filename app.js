@@ -22,9 +22,10 @@ $('#demoPeriod').onchange=e=>ambience($('#demoWeather').value,e.target.value);
 $('#autoAmbience').onclick=()=>ambience($('#demoWeather').value,period(new Date().getHours()));
 const n=new Date(),lab=new Intl.DateTimeFormat('fr-CH',{weekday:'short',day:'numeric',month:'short'}).format(n);
 $('#todayLabel').textContent=lab.charAt(0).toUpperCase()+lab.slice(1);ambience('sun',period(n.getHours()));
-document.querySelector('.version').textContent='v0.3.41 · Stockage sécurisé';
+document.querySelector('.version').textContent='v0.3.42 · Stockage sécurisé';
 document.querySelector('.demo-panel summary').textContent='Démo';
-if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
+const mvNative=new URLSearchParams(location.search).has('native');
+if(!mvNative&&'serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
 
 function wmo(c){c=+c;if(c===0)return'sun';if([1,2,3].includes(c))return'cloud';if([45,48].includes(c))return'fog';if([71,73,75,77,85,86].includes(c))return'snow';if([95,96,99].includes(c))return'storm';if([51,53,55,56,57,61,63,65,66,67,80,81,82].includes(c))return'rain';return'cloud'}
 function mins(iso){let m=String(iso||'').match(/T(\d{2}):(\d{2})/);return m?(+m[1]*60+ +m[2]):null}
