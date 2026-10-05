@@ -65,8 +65,8 @@ jobs:
                   applicationId = "ch.sz.mavie"
                   minSdk = 26
                   targetSdk = 35
-                  versionCode = 225
-                  versionName = "0.3.0.16"
+                  versionCode = 226
+                  versionName = "0.3.42"
               }
               signingConfigs {
                   create("release") {
@@ -927,6 +927,7 @@ jobs:
           class MainActivity:AppCompatActivity(){
               private lateinit var webView:WebView
               private val host="sergezehntner-ux.github.io"
+              private var storageCleaned=false
               private val startUrl="https://sergezehntner-ux.github.io/Ma_Vie/index.html"
               private val askPermissions=registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()){webView.reload()}
               fun refreshEnyaq(){runOnUiThread{webView.evaluateJavascript("window.maVieRefreshEnyaq&&window.maVieRefreshEnyaq()",null)}}
@@ -950,6 +951,24 @@ jobs:
                       }
                       override fun onPageFinished(v:WebView,url:String){
                           super.onPageFinished(v,url)
+                          if(!storageCleaned){
+                              storageCleaned=true
+                              val cleanJs = """(async function(){
+                                try{
+                                  if('serviceWorker' in navigator){
+                                    const regs=await navigator.serviceWorker.getRegistrations();
+                                    await Promise.all(regs.map(r=>r.unregister()));
+                                  }
+                                  if('caches' in window){
+                                    const ks=await caches.keys();
+                                    await Promise.all(ks.filter(k=>k.startsWith('ma-vie-')).map(k=>caches.delete(k)));
+                                  }
+                                }catch(e){}
+                                location.replace('${startUrl}?native=1&clean=1&t='+Date.now());
+                              })();"""
+                              v.evaluateJavascript(cleanJs,null)
+                              return
+                          }
                           val js = """(function(){
                             var s=document.getElementById('mv-android-wallpaper-mode');
                             if(!s){
@@ -969,7 +988,7 @@ jobs:
                   if(missing.isNotEmpty())askPermissions.launch(missing.toTypedArray())
                   val nonce=System.currentTimeMillis()
                   val headers=mapOf("Cache-Control" to "no-cache, no-store, max-age=0","Pragma" to "no-cache")
-                  webView.loadUrl(startUrl+"?t="+nonce,headers)
+                  webView.loadUrl(startUrl+"?native=1&t="+nonce,headers)
                   MaVieWidgetProvider.refresh(this)
               }
           }
@@ -992,7 +1011,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Ma_Vie_Android_v0.3.37_Android_Auto_meteo
+          name: Ma_Vie_Android_v0.3.42
           path: |
             android/app/build/outputs/apk/release/app-release.apk
             android/app/build/outputs/bundle/release/app-release.aab
