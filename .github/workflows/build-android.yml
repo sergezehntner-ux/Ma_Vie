@@ -139,6 +139,7 @@ jobs:
                           <category android:name="android.intent.category.LAUNCHER"/>
                       </intent-filter>
                   </activity>
+                  <service android:name=".MaVieWidgetRefreshService" android:permission="android.permission.BIND_JOB_SERVICE" android:exported="false"/>
                   <receiver android:name=".MaVieWidgetProvider" android:exported="true">
                       <intent-filter>
                           <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
@@ -525,6 +526,46 @@ jobs:
           }
           EOF
 
+          cat > android/app/src/main/java/ch/sz/mavie/MaVieWidgetRefreshService.kt <<'EOF'
+          package ch.sz.mavie
+
+          import android.app.job.JobInfo
+          import android.app.job.JobParameters
+          import android.app.job.JobScheduler
+          import android.app.job.JobService
+          import android.content.ComponentName
+          import android.content.Context
+
+          class MaVieWidgetRefreshService : JobService() {
+              override fun onStartJob(params: JobParameters?): Boolean {
+                  MaVieWidgetProvider.refresh(applicationContext)
+                  jobFinished(params, false)
+                  return false
+              }
+
+              override fun onStopJob(params: JobParameters?): Boolean = true
+
+              companion object {
+                  private const val JOB_ID = 260930
+                  private const val PERIOD_MS = 15 * 60 * 1000L
+
+                  fun schedule(context: Context) {
+                      val scheduler = context.getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
+                      val job = JobInfo.Builder(JOB_ID, ComponentName(context, MaVieWidgetRefreshService::class.java))
+                          .setPersisted(true)
+                          .setPeriodic(PERIOD_MS)
+                          .build()
+                      scheduler.schedule(job)
+                  }
+
+                  fun cancel(context: Context) {
+                      val scheduler = context.getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
+                      scheduler.cancel(JOB_ID)
+                  }
+              }
+          }
+          EOF
+
           cat > android/app/src/main/java/ch/sz/mavie/MaVieWidgetProvider.kt <<'EOF'
           package ch.sz.mavie
 
@@ -556,15 +597,15 @@ jobs:
           import kotlin.concurrent.thread
 
           class MaVieWidgetProvider : AppWidgetProvider() {
-              override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) { schedulePeriodic(context); refresh(context,0) }
-              override fun onEnabled(context: Context) { schedulePeriodic(context); refresh(context,0) }
-              override fun onDisabled(context: Context) { cancelPeriodic(context) }
+              override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) { schedulePeriodic(context); MaVieWidgetRefreshService.schedule(context); refresh(context,0) }
+              override fun onEnabled(context: Context) { schedulePeriodic(context); MaVieWidgetRefreshService.schedule(context); refresh(context,0) }
+              override fun onDisabled(context: Context) { cancelPeriodic(context); MaVieWidgetRefreshService.cancel(context) }
               override fun onReceive(context: Context, intent: Intent) {
                   super.onReceive(context,intent)
                   when(intent.action){
                       ACTION_PERIODIC -> { refresh(context,0); schedulePeriodic(context) }
                       ACTION_RETRY -> refresh(context,intent.getIntExtra("attempt",1))
-                      Intent.ACTION_USER_PRESENT, Intent.ACTION_BOOT_COMPLETED, Intent.ACTION_MY_PACKAGE_REPLACED, Intent.ACTION_TIME_CHANGED, Intent.ACTION_TIMEZONE_CHANGED -> { schedulePeriodic(context); refresh(context,0) }
+                      Intent.ACTION_USER_PRESENT, Intent.ACTION_BOOT_COMPLETED, Intent.ACTION_MY_PACKAGE_REPLACED, Intent.ACTION_TIME_CHANGED, Intent.ACTION_TIMEZONE_CHANGED -> { schedulePeriodic(context); MaVieWidgetRefreshService.schedule(context); refresh(context,0) }
                   }
               }
 
