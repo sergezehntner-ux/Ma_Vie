@@ -22,7 +22,7 @@ $('#demoPeriod').onchange=e=>ambience($('#demoWeather').value,e.target.value);
 $('#autoAmbience').onclick=()=>ambience($('#demoWeather').value,period(new Date().getHours()));
 const n=new Date(),lab=new Intl.DateTimeFormat('fr-CH',{weekday:'short',day:'numeric',month:'short'}).format(n);
 $('#todayLabel').textContent=lab.charAt(0).toUpperCase()+lab.slice(1);ambience('sun',period(n.getHours()));
-document.querySelector('.version').textContent='v0.3.40 · Stockage sécurisé';
+document.querySelector('.version').textContent='v0.3.41 · Stockage sécurisé';
 document.querySelector('.demo-panel summary').textContent='Démo';
 if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
 
