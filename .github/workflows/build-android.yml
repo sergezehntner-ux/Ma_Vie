@@ -958,8 +958,6 @@ jobs:
                               s.textContent='html,body,.app-shell{background:transparent!important;} .weather-scene,.mv-night-crescent{display:none!important;}';
                               document.head.appendChild(s);
                             }
-                            var ver=document.querySelector('.version');
-                            if(ver) ver.textContent='v0.3.32 · Stockage sécurisé';
                           })();"""
                           v.evaluateJavascript(js,null)
                       }
@@ -971,7 +969,7 @@ jobs:
                   if(missing.isNotEmpty())askPermissions.launch(missing.toTypedArray())
                   val nonce=System.currentTimeMillis()
                   val headers=mapOf("Cache-Control" to "no-cache, no-store, max-age=0","Pragma" to "no-cache")
-                  webView.loadUrl(startUrl+"?app=0.3.0&t="+nonce,headers)
+                  webView.loadUrl(startUrl+"?t="+nonce,headers)
                   MaVieWidgetProvider.refresh(this)
               }
           }
