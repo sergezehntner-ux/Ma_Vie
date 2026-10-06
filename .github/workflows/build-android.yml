@@ -65,8 +65,8 @@ jobs:
                   applicationId = "ch.sz.mavie"
                   minSdk = 26
                   targetSdk = 35
-                  versionCode = 226
-                  versionName = "0.3.42"
+                  versionCode = 227
+                  versionName = "0.3.44"
               }
               signingConfigs {
                   create("release") {
@@ -538,9 +538,11 @@ jobs:
 
           class MaVieWidgetRefreshService : JobService() {
               override fun onStartJob(params: JobParameters?): Boolean {
-                  MaVieWidgetProvider.refresh(applicationContext)
-                  jobFinished(params, false)
-                  return false
+                  kotlin.concurrent.thread {
+                      try { MaVieWidgetProvider.refreshBlocking(applicationContext) }
+                      finally { jobFinished(params, false) }
+                  }
+                  return true
               }
 
               override fun onStopJob(params: JobParameters?): Boolean = true
@@ -602,10 +604,22 @@ jobs:
               override fun onDisabled(context: Context) { cancelPeriodic(context); MaVieWidgetRefreshService.cancel(context) }
               override fun onReceive(context: Context, intent: Intent) {
                   super.onReceive(context,intent)
-                  when(intent.action){
-                      ACTION_PERIODIC -> { refresh(context,0); schedulePeriodic(context) }
-                      ACTION_RETRY -> refresh(context,intent.getIntExtra("attempt",1))
-                      Intent.ACTION_USER_PRESENT, Intent.ACTION_BOOT_COMPLETED, Intent.ACTION_MY_PACKAGE_REPLACED, Intent.ACTION_TIME_CHANGED, Intent.ACTION_TIMEZONE_CHANGED -> { schedulePeriodic(context); MaVieWidgetRefreshService.schedule(context); refresh(context,0) }
+                  val attempt = when(intent.action){
+                      ACTION_PERIODIC -> { schedulePeriodic(context); 0 }
+                      ACTION_RETRY -> intent.getIntExtra("attempt",1)
+                      Intent.ACTION_USER_PRESENT, Intent.ACTION_BOOT_COMPLETED, Intent.ACTION_MY_PACKAGE_REPLACED, Intent.ACTION_TIME_CHANGED, Intent.ACTION_TIMEZONE_CHANGED -> { schedulePeriodic(context); MaVieWidgetRefreshService.schedule(context); 0 }
+                      else -> return
+                  }
+                  // Un BroadcastReceiver peut être tué dès que onReceive() se termine.
+                  // goAsync() garde le processus vivant jusqu'à la fin de la mise à jour réseau.
+                  val pending = goAsync()
+                  thread {
+                      try {
+                          val complete = update(context.applicationContext)
+                          if(!complete && attempt<3) scheduleRetry(context,attempt+1)
+                      } catch (_:Exception) {
+                          if(attempt<3) scheduleRetry(context,attempt+1)
+                      } finally { pending.finish() }
                   }
               }
 
@@ -631,11 +645,13 @@ jobs:
                   fun refresh(context: Context, attempt:Int=0) {
                       thread {
                           try {
-                              val complete=update(context)
+                              val complete=update(context.applicationContext)
                               if(!complete && attempt<3) scheduleRetry(context,attempt+1)
                           } catch (_: Exception) { if(attempt<3) scheduleRetry(context,attempt+1) }
                       }
                   }
+
+                  fun refreshBlocking(context: Context):Boolean = update(context.applicationContext)
 
                   private fun scheduleRetry(context:Context,attempt:Int){
                       val delay=when(attempt){1->5_000L;2->20_000L;else->60_000L}
