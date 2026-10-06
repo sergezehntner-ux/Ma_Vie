@@ -1,0 +1,1087 @@
+name: Build Ma Vie Android APK + AAB
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Gradle 8.9
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Create Android project
+        shell: bash
+        run: |
+          mkdir -p android/app/src/main/java/ch/sz/mavie
+          mkdir -p android/app/src/main/res/layout android/app/src/main/res/values android/app/src/main/res/drawable android/app/src/main/res/drawable-nodpi android/app/src/main/res/xml
+
+          cat > android/gradle.properties <<'EOF'
+          android.useAndroidX=true
+          android.enableJetifier=true
+          EOF
+
+          cat > android/settings.gradle.kts <<'EOF'
+          pluginManagement { repositories { google(); mavenCentral(); gradlePluginPortal() } }
+          dependencyResolutionManagement {
+              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+              repositories { google(); mavenCentral() }
+          }
+          rootProject.name = "MaVieBridge"
+          include(":app")
+          EOF
+
+          cat > android/build.gradle.kts <<'EOF'
+          plugins {
+              id("com.android.application") version "8.7.3" apply false
+              id("org.jetbrains.kotlin.android") version "2.0.21" apply false
+          }
+          EOF
+
+          cat > android/app/build.gradle.kts <<'EOF'
+          plugins {
+              id("com.android.application")
+              id("org.jetbrains.kotlin.android")
+          }
+          android {
+              namespace = "ch.sz.mavie"
+              compileOptions {
+                 sourceCompatibility = JavaVersion.VERSION_17
+                 targetCompatibility = JavaVersion.VERSION_17
+              }
+              compileSdk = 35
+              defaultConfig {
+                  applicationId = "ch.sz.mavie"
+                  minSdk = 26
+                  targetSdk = 35
+                  versionCode = 228
+                  versionName = "0.3.45"
+              }
+              signingConfigs {
+                  create("release") {
+                      storeFile = file("../mavie-release.jks")
+                      storePassword = System.getenv("MAVIE_KEYSTORE_PASSWORD")
+                      keyAlias = System.getenv("MAVIE_KEY_ALIAS")
+                      keyPassword = System.getenv("MAVIE_KEY_PASSWORD")
+                  }
+              }
+              buildTypes {
+                  getByName("release") {
+                      isMinifyEnabled = false
+                      signingConfig = signingConfigs.getByName("release")
+                  }
+              }
+          }
+          dependencies {
+              implementation("androidx.core:core-ktx:1.15.0")
+              implementation("androidx.appcompat:appcompat:1.7.0")
+              implementation("androidx.activity:activity-ktx:1.10.0")
+              implementation("androidx.car.app:app:1.7.0")
+              implementation("androidx.car.app:app-projected:1.7.0")
+          }
+          EOF
+
+          cp icon-512.png android/app/src/main/res/drawable/ic_launcher.png
+          cp widget-ursy-green.jpg android/app/src/main/res/drawable-nodpi/widget_ursy_green.jpg
+          cp widget-ursy-snow.jpg android/app/src/main/res/drawable-nodpi/widget_ursy_snow.jpg
+          cp meteo-fog-light.jpg android/app/src/main/res/drawable-nodpi/meteo_fog_light.jpg
+          cp meteo-fog-dense.jpg android/app/src/main/res/drawable-nodpi/meteo_fog_dense.jpg
+          cp meteo-snow-light.jpg android/app/src/main/res/drawable-nodpi/meteo_snow_light.jpg
+          cp meteo-snow-medium.jpg android/app/src/main/res/drawable-nodpi/meteo_snow_medium.jpg
+          cp meteo-snow-heavy.jpg android/app/src/main/res/drawable-nodpi/meteo_snow_heavy.jpg
+          cp meteo-sun-day.jpg android/app/src/main/res/drawable-nodpi/meteo_sun_day.jpg
+          cp meteo-sun-morning.jpg android/app/src/main/res/drawable-nodpi/meteo_sun_morning.jpg
+          cp meteo-sun-evening.jpg android/app/src/main/res/drawable-nodpi/meteo_sun_evening.jpg
+          cp meteo-cloud-light.jpg android/app/src/main/res/drawable-nodpi/meteo_cloud_light.jpg
+          cp meteo-cloud-medium.jpg android/app/src/main/res/drawable-nodpi/meteo_cloud_medium.jpg
+          cp meteo-cloud-heavy.jpg android/app/src/main/res/drawable-nodpi/meteo_cloud_heavy.jpg
+          cp meteo-rain-light.jpg android/app/src/main/res/drawable-nodpi/meteo_rain_light.jpg
+          cp meteo-rain-heavy.jpg android/app/src/main/res/drawable-nodpi/meteo_rain_heavy.jpg
+          cp meteo-storm.jpg android/app/src/main/res/drawable-nodpi/meteo_storm.jpg
+          cp meteo-night-stars.jpg android/app/src/main/res/drawable-nodpi/meteo_night_stars.jpg
+          cp meteo-night-moon.jpg android/app/src/main/res/drawable-nodpi/meteo_night_moon.jpg
+          mkdir -p android/app/src/main/res/raw android/app/src/main/res/xml
+          cp meteo-suisse-fictive.json android/app/src/main/res/raw/meteo_suisse_fictive.json
+
+          cat > android/app/src/main/AndroidManifest.xml <<'EOF'
+          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+              <uses-permission android:name="android.permission.INTERNET"/>
+              <uses-permission android:name="android.permission.READ_CALENDAR"/>
+              <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
+              <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+          <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+              <uses-permission android:name="android.permission.WAKE_LOCK"/>
+              <queries>
+                  <package android:name="cz.skodaauto.myskoda"/>
+              </queries>
+              <application android:label="Ma Vie" android:icon="@drawable/ic_launcher" android:roundIcon="@drawable/ic_launcher" android:usesCleartextTraffic="false" android:theme="@style/Theme.MaVie">
+                  <meta-data android:name="com.google.android.gms.car.application" android:resource="@xml/automotive_app_desc"/>
+                  <meta-data android:name="androidx.car.app.minCarApiLevel" android:value="7"/>
+                  <service android:name=".MaVieCarAppService" android:exported="true">
+                      <intent-filter>
+                          <action android:name="androidx.car.app.CarAppService"/>
+                          <category android:name="androidx.car.app.category.WEATHER"/>
+                      </intent-filter>
+                  </service>
+                  <activity android:name=".MainActivity" android:exported="true">
+                      <intent-filter>
+                          <action android:name="android.intent.action.MAIN"/>
+                          <category android:name="android.intent.category.LAUNCHER"/>
+                      </intent-filter>
+                  </activity>
+                  <service android:name=".MaVieWidgetRefreshService" android:permission="android.permission.BIND_JOB_SERVICE" android:exported="false"/>
+                  <receiver android:name=".MaVieWidgetProvider" android:exported="true">
+                      <intent-filter>
+                          <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+                      <action android:name="android.intent.action.BOOT_COMPLETED"/>
+                      <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+                      <action android:name="android.intent.action.TIME_SET"/>
+                      <action android:name="android.intent.action.TIMEZONE_CHANGED"/>
+                          <action android:name="android.intent.action.USER_PRESENT"/>
+                      </intent-filter>
+                      <meta-data android:name="android.appwidget.provider" android:resource="@xml/ma_vie_widget_info"/>
+                  </receiver>
+              </application>
+          </manifest>
+          EOF
+
+          cat > android/app/src/main/res/xml/automotive_app_desc.xml <<'EOF'
+          <automotiveApp>
+              <uses name="template"/>
+          </automotiveApp>
+          EOF
+
+          cat > android/app/src/main/res/layout/activity_main.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <WebView xmlns:android="http://schemas.android.com/apk/res/android"
+              android:id="@+id/webView"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"
+              android:background="@android:color/transparent" />
+          EOF
+
+          cat > android/app/src/main/res/layout/ma_vie_widget.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:id="@+id/widget_root" android:layout_width="match_parent" android:layout_height="match_parent"
+              android:padding="8dp" android:background="@drawable/widget_frame">
+              <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:padding="8dp">
+                  <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal">
+                      <TextView android:id="@+id/widget_place" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="Ursy" android:textColor="#FFFFFFFF" android:textSize="20sp" android:textStyle="bold"/>
+                      <TextView android:id="@+id/widget_temp" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="--°" android:textColor="#FFFFFFFF" android:textSize="20sp" android:textStyle="bold"/>
+                  </LinearLayout>
+                  <LinearLayout android:layout_width="1dp" android:layout_height="0dp" android:layout_weight="1"/>
+                  <LinearLayout android:id="@+id/card_now" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="9dp" android:layout_marginBottom="5dp" android:background="@drawable/widget_card">
+                      <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="MAINTENANT" android:textColor="#FFFFFFFF" android:textSize="14sp" android:textStyle="bold"/>
+                      <TextView android:id="@+id/widget_now_empty" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#FFFFFFFF" android:textSize="13sp" android:text="Plus de rendez-vous prévu aujourd’hui."/>
+                      <LinearLayout android:id="@+id/event1" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
+                          <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal"><TextView android:id="@+id/event1_start" android:layout_width="52dp" android:layout_height="wrap_content" android:textColor="#FFFFFFFF" android:textSize="13sp"/><TextView android:id="@+id/event1_title" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textColor="#FFFFFFFF" android:textSize="13sp" android:textStyle="bold" android:maxLines="1" android:ellipsize="end"/><TextView android:id="@+id/event1_endwide" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#CCFFFFFF" android:textSize="13sp"/></LinearLayout>
+                          <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal"><TextView android:layout_width="52dp" android:layout_height="1dp" android:text=""/><TextView android:id="@+id/event1_place" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textColor="#BFFFFFFF" android:textSize="12sp" android:maxLines="1"/></LinearLayout><TextView android:id="@+id/event1_endnarrow" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/><TextView android:id="@+id/event1_desc" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/>
+                      </LinearLayout>
+                      <LinearLayout android:id="@+id/event2" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
+                          <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal"><TextView android:id="@+id/event2_start" android:layout_width="52dp" android:layout_height="wrap_content" android:textColor="#FFFFFFFF" android:textSize="13sp"/><TextView android:id="@+id/event2_title" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textColor="#FFFFFFFF" android:textSize="13sp" android:textStyle="bold" android:maxLines="1" android:ellipsize="end"/><TextView android:id="@+id/event2_endwide" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#CCFFFFFF" android:textSize="13sp"/></LinearLayout>
+                          <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal"><TextView android:layout_width="52dp" android:layout_height="1dp" android:text=""/><TextView android:id="@+id/event2_place" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textColor="#BFFFFFFF" android:textSize="12sp" android:maxLines="1"/></LinearLayout><TextView android:id="@+id/event2_endnarrow" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/><TextView android:id="@+id/event2_desc" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/>
+                      </LinearLayout>
+                      <LinearLayout android:id="@+id/event3" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:visibility="gone">
+                          <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal"><TextView android:id="@+id/event3_start" android:layout_width="52dp" android:layout_height="wrap_content" android:textColor="#FFFFFFFF" android:textSize="13sp"/><TextView android:id="@+id/event3_title" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textColor="#FFFFFFFF" android:textSize="13sp" android:textStyle="bold" android:maxLines="1" android:ellipsize="end"/><TextView android:id="@+id/event3_endwide" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textColor="#CCFFFFFF" android:textSize="13sp"/></LinearLayout>
+                          <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal"><TextView android:layout_width="52dp" android:layout_height="1dp" android:text=""/><TextView android:id="@+id/event3_place" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textColor="#BFFFFFFF" android:textSize="12sp" android:maxLines="1"/></LinearLayout><TextView android:id="@+id/event3_endnarrow" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/><TextView android:id="@+id/event3_desc" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone"/>
+                      </LinearLayout>
+                  </LinearLayout>
+                  <LinearLayout android:id="@+id/card_know" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="9dp" android:layout_marginBottom="5dp" android:background="@drawable/widget_card">
+                      <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="À SAVOIR" android:textColor="#FFFFFFFF" android:textSize="14sp" android:textStyle="bold"/>
+                      <TextView android:id="@+id/widget_know" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="#FFFFFFFF" android:textSize="13sp" android:maxLines="4"/>
+                  </LinearLayout>
+                  <LinearLayout android:id="@+id/card_me" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:padding="9dp" android:background="@drawable/widget_card">
+                      <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="POUR MOI   " android:textColor="#FFFFFFFF" android:textSize="14sp" android:textStyle="bold"/>
+                      <TextView android:id="@+id/widget_glucose" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="🩸 Glycémie —" android:textColor="#FFFFFFFF" android:textSize="13sp"/>
+                      <TextView android:id="@+id/widget_enyaq" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="🚙 Enyaq —" android:textColor="#FFFFFFFF" android:textSize="13sp"/>
+                  </LinearLayout>
+              </LinearLayout>
+          </FrameLayout>
+          EOF
+
+          cat > android/app/src/main/res/drawable/widget_frame.xml <<'EOF'
+          <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+              <solid android:color="#00000000"/><stroke android:width="1dp" android:color="#AAFFFFFF"/><corners android:radius="20dp"/>
+          </shape>
+          EOF
+
+          cat > android/app/src/main/res/drawable/widget_card.xml <<'EOF'
+          <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+              <solid android:color="#700B1C22"/><stroke android:width="1dp" android:color="#55FFFFFF"/><corners android:radius="16dp"/>
+          </shape>
+          EOF
+
+          cat > android/app/src/main/res/xml/ma_vie_widget_info.xml <<'EOF'
+          <?xml version="1.0" encoding="utf-8"?>
+          <appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+              android:minWidth="300dp" android:minHeight="180dp" android:targetCellWidth="6" android:targetCellHeight="4"
+              android:updatePeriodMillis="1800000" android:initialLayout="@layout/ma_vie_widget" android:resizeMode="horizontal|vertical"
+              android:widgetCategory="home_screen" android:description="@string/widget_description"/>
+          EOF
+
+          cat > android/app/src/main/res/values/strings.xml <<'EOF'
+          <resources><string name="app_name">Ma Vie</string><string name="widget_description">Ma Vie — aperçu de ma journée</string></resources>
+          EOF
+
+          cat > android/app/src/main/res/values/styles.xml <<'EOF'
+          <resources>
+              <style name="Theme.MaVie" parent="Theme.AppCompat.DayNight.NoActionBar">
+                  <item name="android:windowBackground">@android:color/transparent</item>
+                  <item name="android:windowShowWallpaper">true</item>
+                  <item name="android:backgroundDimEnabled">false</item>
+                  <item name="android:windowNoTitle">true</item>
+                  <item name="android:windowLightStatusBar">false</item>
+                  <item name="android:navigationBarColor">@android:color/transparent</item>
+                  <item name="android:statusBarColor">@android:color/transparent</item>
+              </style>
+          </resources>
+          EOF
+
+          cat > android/app/src/main/java/ch/sz/mavie/CalendarBridge.kt <<'EOF'
+          package ch.sz.mavie
+          import android.content.Context
+          import android.provider.CalendarContract
+          import android.location.LocationManager
+          import android.location.Location
+          import android.os.Build
+          import android.os.CancellationSignal
+          import java.util.concurrent.CountDownLatch
+          import java.util.concurrent.TimeUnit
+          import android.content.pm.PackageManager
+          import androidx.core.content.ContextCompat
+          import android.webkit.JavascriptInterface
+          import org.json.JSONArray
+          import org.json.JSONObject
+          import java.util.Calendar
+
+          class CalendarBridge(private val context: Context) {
+              @JavascriptInterface
+              fun getLocation(): String {
+                  val fine = ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                  val coarse = ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                  if (!fine && !coarse) return ""
+                  val lm = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+                  val best = lm.getProviders(true).mapNotNull { provider ->
+                      try { lm.getLastKnownLocation(provider) } catch (_: SecurityException) { null }
+                  }.maxByOrNull { it.time } ?: return ""
+                  return JSONObject().apply {
+                      put("latitude", best.latitude); put("longitude", best.longitude)
+                      put("accuracy", best.accuracy); put("time", best.time)
+                  }.toString()
+              }
+              @JavascriptInterface fun openCompanion(url: String) {
+                  try {
+                      val uri = android.net.Uri.parse(url); if (uri.scheme != "https") return
+                      context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, uri).apply {
+                          addCategory(android.content.Intent.CATEGORY_BROWSABLE); addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                      })
+                  } catch (_: Exception) {}
+              }
+              @JavascriptInterface fun openCalendarDay(timeMillis: Long) {
+                  val uri = CalendarContract.CONTENT_URI.buildUpon().appendPath("time").appendPath(timeMillis.toString()).build()
+                  try { context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW).apply {
+                      data=uri; addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                  }) } catch (_: Exception) {}
+              }
+              @JavascriptInterface fun getEvents(): String {
+                  val now=System.currentTimeMillis()
+                  val cal=Calendar.getInstance().apply { timeInMillis=now; add(Calendar.DAY_OF_YEAR,2); set(Calendar.HOUR_OF_DAY,23); set(Calendar.MINUTE,59) }
+                  val uri=CalendarContract.Instances.CONTENT_URI.buildUpon().also {
+                      android.content.ContentUris.appendId(it,now); android.content.ContentUris.appendId(it,cal.timeInMillis)
+                  }.build()
+                  val p=arrayOf(CalendarContract.Instances.EVENT_ID,CalendarContract.Instances.TITLE,CalendarContract.Instances.BEGIN,
+                      CalendarContract.Instances.END,CalendarContract.Instances.EVENT_LOCATION,CalendarContract.Instances.CALENDAR_ID,
+                      CalendarContract.Instances.CALENDAR_DISPLAY_NAME,CalendarContract.Instances.ALL_DAY,CalendarContract.Instances.DESCRIPTION)
+                  val out=JSONArray()
+                  context.contentResolver.query(uri,p,null,null,CalendarContract.Instances.BEGIN+" ASC")?.use { c ->
+                      while(c.moveToNext()) out.put(JSONObject().apply {
+                          put("id",c.getLong(0)); put("title",c.getString(1)?:""); put("start",c.getLong(2)); put("end",c.getLong(3))
+                          put("place",c.getString(4)?:""); put("calendarId",c.getLong(5)); put("calendar",c.getString(6)?:"")
+                          put("allDay",c.getInt(7)==1); put("description",c.getString(8)?:"")
+                      })
+                  }
+                  return out.toString()
+              }
+          }
+          EOF
+
+          cat > android/app/src/main/java/ch/sz/mavie/SecretBox.kt <<'EOF'
+          package ch.sz.mavie
+          import android.security.keystore.KeyGenParameterSpec
+          import android.security.keystore.KeyProperties
+          import android.util.Base64
+          import java.security.KeyStore
+          import javax.crypto.Cipher
+          import javax.crypto.KeyGenerator
+          import javax.crypto.SecretKey
+          import javax.crypto.spec.GCMParameterSpec
+
+          class SecretBox(private val alias:String) {
+              private fun key():SecretKey {
+                  val ks=KeyStore.getInstance("AndroidKeyStore").apply{load(null)}
+                  (ks.getKey(alias,null) as? SecretKey)?.let{return it}
+                  val kg=KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES,"AndroidKeyStore")
+                  kg.init(KeyGenParameterSpec.Builder(alias,KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
+                      .setBlockModes(KeyProperties.BLOCK_MODE_GCM).setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE).build())
+                  return kg.generateKey()
+              }
+              fun enc(v:String):String {
+                  val c=Cipher.getInstance("AES/GCM/NoPadding"); c.init(Cipher.ENCRYPT_MODE,key())
+                  return Base64.encodeToString(c.iv,Base64.NO_WRAP)+":"+Base64.encodeToString(c.doFinal(v.toByteArray()),Base64.NO_WRAP)
+              }
+              fun dec(v:String?):String? {
+                  if(v.isNullOrBlank()) return null
+                  return try {
+                      val p=v.split(":",limit=2); val c=Cipher.getInstance("AES/GCM/NoPadding")
+                      c.init(Cipher.DECRYPT_MODE,key(),GCMParameterSpec(128,Base64.decode(p[0],Base64.NO_WRAP)))
+                      String(c.doFinal(Base64.decode(p[1],Base64.NO_WRAP)))
+                  } catch(_:Exception){null}
+              }
+          }
+          EOF
+
+          cat > android/app/src/main/java/ch/sz/mavie/EnyaqBridge.kt <<'EOF'
+          package ch.sz.mavie
+          import android.content.Context
+          import android.content.Intent
+          import android.app.Activity
+          import android.app.AlertDialog
+          import android.widget.EditText
+          import android.widget.LinearLayout
+          import android.webkit.JavascriptInterface
+          import org.json.JSONObject
+          import java.net.HttpURLConnection
+          import java.net.URL
+
+          class EnyaqBridge(private val context:Context,private val activity:Activity?){
+              private val prefs=context.getSharedPreferences("enyaq_private",Context.MODE_PRIVATE)
+              private val box=SecretBox("MaVieEnyaqKey")
+              @JavascriptInterface fun configure(){ val a=activity?:return; a.runOnUiThread {
+                  val pad=(20*a.resources.displayMetrics.density).toInt()
+                  val layout=LinearLayout(a).apply{orientation=LinearLayout.VERTICAL;setPadding(pad,0,pad,0)}
+                  val vin=EditText(a).apply{hint="VIN (17 caractères)";isSingleLine=true}
+                  val key=EditText(a).apply{hint="Clé API MyŠkoda";isSingleLine=true;inputType=129}
+                  layout.addView(vin);layout.addView(key)
+                  val dlg=AlertDialog.Builder(a).setTitle("Configurer Enyaq").setView(layout).setNegativeButton("Annuler",null).setPositiveButton("Enregistrer",null).create()
+                  dlg.setOnShowListener{dlg.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener{
+                      val v=vin.text.toString().trim().uppercase();val k=key.text.toString().trim()
+                      if(v.length!=17){vin.error="Le VIN doit contenir 17 caractères";return@setOnClickListener}
+                      if(k.isBlank()){key.error="Clé API requise";return@setOnClickListener}
+                      prefs.edit().putString("vin",box.enc(v)).putString("apiKey",box.enc(k)).apply();dlg.dismiss()
+                      (a as? MainActivity)?.refreshEnyaq()
+                  }};dlg.show()
+              }}
+              @JavascriptInterface fun getData():String{
+                  val vin=box.dec(prefs.getString("vin",null));val api=box.dec(prefs.getString("apiKey",null))
+                  if(vin.isNullOrBlank()||api.isNullOrBlank())return JSONObject().put("setupRequired",true).toString()
+                  var c:HttpURLConnection?=null
+                  return try{
+                      c=(URL("https://public.api.connect.skoda-auto.cz/api/v1/vehicles/$vin?include=charging").openConnection() as HttpURLConnection).apply{
+                          requestMethod="GET";connectTimeout=8000;readTimeout=8000;setRequestProperty("X-API-Key",api);setRequestProperty("Accept","application/json");useCaches=false}
+                      if(c.responseCode!=200)JSONObject().put("ok",false).toString() else{
+                          val b=JSONObject(c.inputStream.bufferedReader().use{it.readText()}).getJSONObject("vehicle").getJSONObject("charging").getJSONObject("status").getJSONObject("battery")
+                          JSONObject().put("ok",true).put("percent",b.getDouble("stateOfChargeInPercent")).put("km",b.getDouble("remainingCruisingRangeInMeters")/1000.0).toString()
+                      }
+                  }catch(_:Exception){JSONObject().put("ok",false).toString()}finally{c?.disconnect()}
+              }
+              @JavascriptInterface fun openMySkoda(){try{context.packageManager.getLaunchIntentForPackage("cz.skodaauto.myskoda")?.also{it.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);context.startActivity(it)}}catch(_:Exception){}}
+          }
+          EOF
+
+          cat > android/app/src/main/java/ch/sz/mavie/LibreBridge.kt <<'EOF'
+          package ch.sz.mavie
+
+          import android.app.Activity
+          import android.app.AlertDialog
+          import android.content.Context
+          import android.text.InputType
+          import android.webkit.JavascriptInterface
+          import android.widget.EditText
+          import android.widget.LinearLayout
+          import org.json.JSONObject
+          import java.net.HttpURLConnection
+          import java.net.URL
+          import java.security.MessageDigest
+          import java.text.SimpleDateFormat
+          import java.util.Locale
+          import java.util.TimeZone
+
+          class LibreBridge(private val context:Context,private val activity:Activity?){
+              private val prefs=context.getSharedPreferences("libre_private",Context.MODE_PRIVATE)
+              private val box=SecretBox("MaVieLibreKey")
+              private val headers=mapOf("Content-Type" to "application/json","Accept" to "application/json","product" to "llu.android","version" to "4.17.0","Cache-Control" to "no-cache")
+              private fun get(k:String)=box.dec(prefs.getString(k,null))
+              private fun put(k:String,v:String)=prefs.edit().putString(k,box.enc(v)).apply()
+              private fun clearSession(){prefs.edit().remove("token").remove("account").remove("patient").apply()}
+              private fun sha(s:String)=MessageDigest.getInstance("SHA-256").digest(s.toByteArray()).joinToString(""){"%02x".format(it)}
+              private fun base()="https://api-${prefs.getString("region","de")}.libreview.io"
+
+              @JavascriptInterface fun configure(){val a=activity?:return;a.runOnUiThread{
+                  val pad=(20*a.resources.displayMetrics.density).toInt()
+                  val layout=LinearLayout(a).apply{orientation=LinearLayout.VERTICAL;setPadding(pad,0,pad,0)}
+                  val email=EditText(a).apply{hint="E-mail LibreLinkUp";isSingleLine=true;inputType=InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS}
+                  val pass=EditText(a).apply{hint="Mot de passe LibreLinkUp";isSingleLine=true;inputType=InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD}
+                  layout.addView(email);layout.addView(pass)
+                  val dlg=AlertDialog.Builder(a).setTitle("Configurer LibreLinkUp").setMessage("Compte secondaire uniquement. Les identifiants restent chiffrés sur ce téléphone.")
+                      .setView(layout).setNegativeButton("Annuler",null).setPositiveButton("Enregistrer",null).create()
+                  dlg.setOnShowListener{dlg.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener{
+                      val e=email.text.toString().trim();val p=pass.text.toString()
+                      if(!e.contains("@")){email.error="Adresse e-mail requise";return@setOnClickListener}
+                      if(p.isBlank()){pass.error="Mot de passe requis";return@setOnClickListener}
+                      put("email",e);put("password",p);clearSession();dlg.dismiss();(a as? MainActivity)?.refreshLibre()
+                  }};dlg.show()
+              }}
+
+              private fun request(method:String,url:String,body:String?=null,token:String?=null,account:String?=null):Pair<Int,String>{
+                  val c=URL(url).openConnection() as HttpURLConnection
+                  return try{
+                      c.requestMethod=method;c.connectTimeout=12000;c.readTimeout=12000;c.useCaches=false
+                      headers.forEach{(k,v)->c.setRequestProperty(k,v)}
+                      if(token!=null)c.setRequestProperty("Authorization","Bearer $token")
+                      if(account!=null)c.setRequestProperty("account-id",sha(account))
+                      if(body!=null){c.doOutput=true;c.outputStream.use{it.write(body.toByteArray())}}
+                      val code=c.responseCode
+                      val stream=if(code in 200..299)c.inputStream else c.errorStream
+                      code to (stream?.bufferedReader()?.use{it.readText()}?:"")
+                  }finally{c.disconnect()}
+              }
+
+              private fun login():Boolean{
+                  val email=get("email")?:return false;val pass=get("password")?:return false
+                  for(i in 0..1){
+                      val (code,raw)=request("POST","${base()}/llu/auth/login",JSONObject().put("email",email).put("password",pass).toString())
+                      if(code==429||code==476)return false
+                      if(code !in 200..299)return false
+                      val top=JSONObject(raw);val data=top.optJSONObject("data")?:return false
+                      if(data.optBoolean("redirect") && i==0){
+                          val r=data.optString("region").lowercase();if(r.isBlank())return false
+                          prefs.edit().putString("region",r).apply();continue
+                      }
+                      val token=data.optJSONObject("authTicket")?.optString("token").orEmpty()
+                      val account=data.optJSONObject("user")?.optString("id").orEmpty()
+                      if(token.isBlank()||account.isBlank())return false
+                      put("token",token);put("account",account);return true
+                  }
+                  return false
+              }
+
+              private fun ensurePatient(token:String,account:String):String?{
+                  get("patient")?.let{return it}
+                  val (code,raw)=request("GET","${base()}/llu/connections",null,token,account)
+                  if(code==401)return null
+                  if(code !in 200..299)return null
+                  val a=JSONObject(raw).optJSONArray("data")?:return null
+                  if(a.length()==0)return null
+                  val id=a.optJSONObject(0)?.optString("patientId").orEmpty()
+                  if(id.isBlank())return null
+                  put("patient",id);return id
+              }
+
+              private fun parseUtc(s:String):Long{
+                  return try{
+                      val f=SimpleDateFormat("M/d/yyyy h:mm:ss a",Locale.US);f.timeZone=TimeZone.getTimeZone("UTC");f.parse(s)?.time?:0L
+                  }catch(_:Exception){0L}
+              }
+              private fun arrow(n:Int)=when(n){1->"↓";2->"↘";3->"→";4->"↗";5->"↑";else->""}
+
+              @JavascriptInterface fun getData():String{
+                  if(get("email").isNullOrBlank()||get("password").isNullOrBlank())return JSONObject().put("setupRequired",true).toString()
+                  var token=get("token");var account=get("account")
+                  if(token.isNullOrBlank()||account.isNullOrBlank()){
+                      if(!login())return JSONObject().put("ok",false).toString()
+                      token=get("token");account=get("account")
+                  }
+                  fun fetch():JSONObject?{
+                      val t=token?:return null;val a=account?:return null;val patient=ensurePatient(t,a)?:return null
+                      val (code,raw)=request("GET","${base()}/llu/connections/$patient/graph",null,t,a)
+                      if(code==401)return JSONObject().put("_unauthorized",true)
+                      if(code !in 200..299)return null
+                      val data=JSONObject(raw).optJSONObject("data")?:return null
+                      return data.optJSONObject("connection")?.optJSONObject("glucoseMeasurement")
+                  }
+                  var m=fetch()
+                  if(m?.optBoolean("_unauthorized")==true){
+                      clearSession();if(!login())return JSONObject().put("ok",false).toString()
+                      token=get("token");account=get("account");m=fetch()
+                  }
+                  if(m==null||m.optBoolean("_unauthorized"))return JSONObject().put("ok",false).toString()
+                  val mg=m.optDouble("ValueInMgPerDl",Double.NaN)
+                  val ts=parseUtc(m.optString("FactoryTimestamp"))
+                  val age=System.currentTimeMillis()-ts
+                  val trend=m.optInt("TrendArrow",0)
+                  if(mg.isNaN()||ts<=0||age< -120000L||age>300000L||trend !in 1..5)return JSONObject().put("ok",false).toString()
+                  return JSONObject().put("ok",true).put("mmol",mg/18.0182).put("arrow",arrow(trend)).put("measuredAt",ts).toString()
+              }
+          }
+          EOF
+
+          cat > android/app/src/main/java/ch/sz/mavie/MaVieWidgetRefreshService.kt <<'EOF'
+          package ch.sz.mavie
+
+          import android.app.job.JobInfo
+          import android.app.job.JobParameters
+          import android.app.job.JobScheduler
+          import android.app.job.JobService
+          import android.content.ComponentName
+          import android.content.Context
+
+          class MaVieWidgetRefreshService : JobService() {
+              override fun onStartJob(params: JobParameters?): Boolean {
+                  kotlin.concurrent.thread {
+                      try { MaVieWidgetProvider.refreshBlocking(applicationContext) }
+                      finally { jobFinished(params, false) }
+                  }
+                  return true
+              }
+
+              override fun onStopJob(params: JobParameters?): Boolean = true
+
+              companion object {
+                  private const val JOB_ID = 260930
+                  private const val PERIOD_MS = 15 * 60 * 1000L
+
+                  fun schedule(context: Context) {
+                      val scheduler = context.getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
+                      val job = JobInfo.Builder(JOB_ID, ComponentName(context, MaVieWidgetRefreshService::class.java))
+                          .setPersisted(true)
+                          .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                          .setPeriodic(PERIOD_MS)
+                          .build()
+                      scheduler.schedule(job)
+                  }
+
+                  fun cancel(context: Context) {
+                      val scheduler = context.getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
+                      scheduler.cancel(JOB_ID)
+                  }
+              }
+          }
+          EOF
+
+          cat > android/app/src/main/java/ch/sz/mavie/MaVieWidgetProvider.kt <<'EOF'
+          package ch.sz.mavie
+
+          import android.app.PendingIntent
+          import android.app.AlarmManager
+          import android.appwidget.AppWidgetManager
+          import android.appwidget.AppWidgetProvider
+          import android.content.ComponentName
+          import android.content.Context
+          import android.content.Intent
+          import android.graphics.*
+          import android.location.Geocoder
+          import android.location.LocationManager
+          import android.location.Location
+          import android.os.Build
+          import android.os.CancellationSignal
+          import java.util.concurrent.CountDownLatch
+          import java.util.concurrent.TimeUnit
+          import android.provider.CalendarContract
+          import android.widget.RemoteViews
+          import android.view.View
+          import org.json.JSONObject
+          import java.net.URL
+          import java.text.SimpleDateFormat
+          import java.util.*
+          import java.time.Instant
+          import java.time.ZoneId
+          import java.time.ZonedDateTime
+          import kotlin.concurrent.thread
+
+          class MaVieWidgetProvider : AppWidgetProvider() {
+              override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) { schedulePeriodic(context); MaVieWidgetRefreshService.schedule(context); refresh(context,0) }
+              override fun onEnabled(context: Context) { schedulePeriodic(context); MaVieWidgetRefreshService.schedule(context); refresh(context,0) }
+              override fun onDisabled(context: Context) { cancelPeriodic(context); MaVieWidgetRefreshService.cancel(context) }
+              override fun onReceive(context: Context, intent: Intent) {
+                  super.onReceive(context,intent)
+                  val attempt = when(intent.action){
+                      ACTION_PERIODIC -> { schedulePeriodic(context); 0 }
+                      ACTION_RETRY -> intent.getIntExtra("attempt",1)
+                      Intent.ACTION_USER_PRESENT, Intent.ACTION_BOOT_COMPLETED, Intent.ACTION_MY_PACKAGE_REPLACED, Intent.ACTION_TIME_CHANGED, Intent.ACTION_TIMEZONE_CHANGED -> { schedulePeriodic(context); MaVieWidgetRefreshService.schedule(context); 0 }
+                      else -> return
+                  }
+                  // Un BroadcastReceiver peut être tué dès que onReceive() se termine.
+                  // goAsync() garde le processus vivant jusqu'à la fin de la mise à jour réseau.
+                  val pending = goAsync()
+                  val power = context.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
+                  val wakeLock = power.newWakeLock(
+                      android.os.PowerManager.PARTIAL_WAKE_LOCK,
+                      "MaVie:WidgetRefresh"
+                  ).apply {
+                      setReferenceCounted(false)
+                      acquire(90_000L)
+                  }
+                  thread {
+                      try {
+                          val complete = update(context.applicationContext)
+                          if(!complete && attempt<3) scheduleRetry(context,attempt+1)
+                      } catch (_:Exception) {
+                          if(attempt<3) scheduleRetry(context,attempt+1)
+                      } finally {
+                          if (wakeLock.isHeld) wakeLock.release()
+                          pending.finish()
+                      }
+                  }
+              }
+
+              companion object {
+                  private const val ACTION_RETRY="ch.sz.mavie.WIDGET_RETRY"
+                  private const val ACTION_PERIODIC="ch.sz.mavie.WIDGET_PERIODIC"
+                  private const val PERIODIC_MS=5*60*1000L
+
+                  private fun periodicIntent(context:Context)=PendingIntent.getBroadcast(
+                      context,199,Intent(context,MaVieWidgetProvider::class.java).setAction(ACTION_PERIODIC),
+                      PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+
+                  private fun schedulePeriodic(context:Context){
+                      val alarm=context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                      alarm.setAndAllowWhileIdle(AlarmManager.ELAPSED_REALTIME_WAKEUP,android.os.SystemClock.elapsedRealtime()+PERIODIC_MS,periodicIntent(context))
+                  }
+
+                  private fun cancelPeriodic(context:Context){
+                      val alarm=context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                      alarm.cancel(periodicIntent(context))
+                  }
+
+                  fun refresh(context: Context, attempt:Int=0) {
+                      thread {
+                          try {
+                              val complete=update(context.applicationContext)
+                              if(!complete && attempt<3) scheduleRetry(context,attempt+1)
+                          } catch (_: Exception) { if(attempt<3) scheduleRetry(context,attempt+1) }
+                      }
+                  }
+
+                  fun refreshBlocking(context: Context):Boolean = update(context.applicationContext)
+
+                  private fun scheduleRetry(context:Context,attempt:Int){
+                      val delay=when(attempt){1->5_000L;2->20_000L;else->60_000L}
+                      val i=Intent(context,MaVieWidgetProvider::class.java).setAction(ACTION_RETRY).putExtra("attempt",attempt)
+                      val pi=PendingIntent.getBroadcast(context,200+attempt,i,PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+                      val alarm=context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+                      alarm.set(AlarmManager.ELAPSED_REALTIME_WAKEUP,android.os.SystemClock.elapsedRealtime()+delay,pi)
+                  }
+
+                  private fun update(context: Context):Boolean {
+                      val mgr=AppWidgetManager.getInstance(context)
+                      val ids=mgr.getAppWidgetIds(ComponentName(context,MaVieWidgetProvider::class.java)); if(ids.isEmpty()) return true
+                      val liveLocation=lastLocation(context)
+                      val prefs=context.getSharedPreferences("ma_vie_widget",Context.MODE_PRIVATE)
+                      if(liveLocation.first!=null && liveLocation.second!=null){
+                          prefs.edit().putLong("last_lat",java.lang.Double.doubleToRawLongBits(liveLocation.first!!)).putLong("last_lon",java.lang.Double.doubleToRawLongBits(liveLocation.second!!)).apply()
+                      }
+                      val lat=liveLocation.first ?: if(prefs.contains("last_lat")) java.lang.Double.longBitsToDouble(prefs.getLong("last_lat",0L)) else null
+                      val lon=liveLocation.second ?: if(prefs.contains("last_lon")) java.lang.Double.longBitsToDouble(prefs.getLong("last_lon",0L)) else null
+
+                      // Etape 1 : une seule verite de contexte = GPS + fuseau + date/heure locale du lieu.
+                      val geo=geoContext(lat,lon,prefs)
+                      val weather=weather(geo.lat,geo.lon)
+                      val placeName=place(context,geo.lat,geo.lon)
+                      if(placeName!="Ma Vie") prefs.edit().putString("last_place",placeName).apply()
+                      val shownPlace=if(placeName=="Ma Vie") prefs.getString("last_place","Ma Vie") ?: "Ma Vie" else placeName
+                      val ev=events(context)
+                      val libre=try{JSONObject(LibreBridge(context,null).getData())}catch(_:Exception){null}
+                      val enyaq=try{JSONObject(EnyaqBridge(context,null).getData())}catch(_:Exception){null}
+                      val app=PendingIntent.getActivity(context,10,Intent(context,MainActivity::class.java),PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+                      val calUri=CalendarContract.CONTENT_URI.buildUpon().appendPath("time").appendPath(System.currentTimeMillis().toString()).build()
+                      val cal=PendingIntent.getActivity(context,11,Intent(Intent.ACTION_VIEW,calUri),PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+                      ids.forEach{id->
+                          val v=RemoteViews(context.packageName,R.layout.ma_vie_widget)
+                          v.setTextViewText(R.id.widget_place,shownPlace); v.setTextViewText(R.id.widget_temp,weather.first)
+                          v.setTextViewText(R.id.widget_know,ev.second)
+                          v.setTextViewText(R.id.widget_glucose, if(libre?.optBoolean("ok")==true) "🩸 %.1f mmol/L %s".format(Locale.US,libre.optDouble("mmol"),libre.optString("arrow")) else "🩸 Glycémie —")
+                          v.setTextViewText(R.id.widget_enyaq,if(enyaq?.optBoolean("ok")==true) "🚙 %.0f %% · %.0f km".format(Locale.US,enyaq.optDouble("percent"),enyaq.optDouble("km")) else "🚙 Enyaq —")
+                          val narrow=mgr.getAppWidgetOptions(id).getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH,600)<430
+                          bindAgenda(v,ev.first,narrow)
+                          v.setOnClickPendingIntent(R.id.widget_root,app); v.setOnClickPendingIntent(R.id.card_now,cal)
+                          mgr.updateAppWidget(id,v)
+                      }
+                      val weatherOk=weather.first!="--°"
+                      val libreOk=libre?.optBoolean("ok")==true
+                      val enyaqOk=enyaq?.optBoolean("ok")==true
+                      return weatherOk && libreOk && enyaqOk
+                  }
+
+                  private fun lastLocation(c:Context):Pair<Double?,Double?> { return try{
+                      val lm=c.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+                      var fresh:Location?=null
+                      if(Build.VERSION.SDK_INT>=30){
+                          val provider=when{lm.isProviderEnabled(LocationManager.GPS_PROVIDER)->LocationManager.GPS_PROVIDER;lm.isProviderEnabled(LocationManager.NETWORK_PROVIDER)->LocationManager.NETWORK_PROVIDER;else->null}
+                          if(provider!=null){
+                              val latch=CountDownLatch(1); val cancel=CancellationSignal()
+                              try{lm.getCurrentLocation(provider,cancel,c.mainExecutor){loc->fresh=loc;latch.countDown()};latch.await(4,TimeUnit.SECONDS);cancel.cancel()}catch(_:Exception){}
+                          }
+                      }
+                      val cached=lm.getProviders(true).mapNotNull{try{lm.getLastKnownLocation(it)}catch(_:SecurityException){null}}.maxByOrNull{it.time}
+                      val l=fresh ?: cached
+                      Pair(l?.latitude,l?.longitude)
+                  }catch(_:Exception){Pair(null,null)} }
+
+                  data class GeoContext(val lat:Double?,val lon:Double?,val timezone:String,val localNow:ZonedDateTime)
+
+                  private fun geoContext(lat:Double?,lon:Double?,prefs:android.content.SharedPreferences):GeoContext {
+                      var zoneName=prefs.getString("last_timezone",null)
+                      if(lat!=null && lon!=null){
+                          try{
+                              val raw=URL("https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon&timezone=auto&forecast_days=1").readText()
+                              val z=JSONObject(raw).optString("timezone","").trim()
+                              if(z.isNotEmpty()){ ZoneId.of(z); zoneName=z; prefs.edit().putString("last_timezone",z).apply() }
+                          }catch(_:Exception){}
+                      }
+                      val safeZone=try{ZoneId.of(zoneName ?: TimeZone.getDefault().id)}catch(_:Exception){ZoneId.systemDefault()}
+                      val now=ZonedDateTime.ofInstant(Instant.ofEpochMilli(System.currentTimeMillis()),safeZone)
+                      prefs.edit().putString("geo_timezone",safeZone.id).putString("geo_local_date",now.toLocalDate().toString()).putString("geo_local_time",now.toLocalTime().withNano(0).toString()).putLong("geo_context_epoch_ms",System.currentTimeMillis()).apply()
+                      return GeoContext(lat,lon,safeZone.id,now)
+                  }
+
+                  private fun place(c:Context,lat:Double?,lon:Double?):String { if(lat==null||lon==null)return "Ma Vie"; return try{
+                      @Suppress("DEPRECATION") val a=Geocoder(c,Locale.getDefault()).getFromLocation(lat,lon,1)?.firstOrNull()
+                      a?.locality ?: a?.subLocality ?: a?.adminArea ?: "Ma Vie"
+                  }catch(_:Exception){"Ma Vie"} }
+
+                  private fun weather(lat:Double?,lon:Double?):Pair<String,Int>{ if(lat==null||lon==null)return Pair("--°",0); return try{
+                      val raw=URL("https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon&current=temperature_2m,weather_code,is_day&timezone=auto").readText()
+                      val o=JSONObject(raw).getJSONObject("current"); Pair("%.0f°".format(o.getDouble("temperature_2m")),o.getInt("weather_code")+(if(o.optInt("is_day",1)==0)1000 else 0))
+                  }catch(_:Exception){Pair("--°",0)} }
+
+                  private fun distanceKm(aLat:Double,aLon:Double,bLat:Double,bLon:Double):Double{
+                      val r=6371.0
+                      val dLat=Math.toRadians(bLat-aLat); val dLon=Math.toRadians(bLon-aLon)
+                      val x=Math.sin(dLat/2)*Math.sin(dLat/2)+Math.cos(Math.toRadians(aLat))*Math.cos(Math.toRadians(bLat))*Math.sin(dLon/2)*Math.sin(dLon/2)
+                      return 2*r*Math.atan2(Math.sqrt(x),Math.sqrt(1-x))
+                  }
+
+                  private fun moonBitmap():Bitmap{
+                      val size=48; val b=Bitmap.createBitmap(size,size,Bitmap.Config.ARGB_8888); val c=Canvas(b)
+                      val outer=Path().apply{addCircle(24f,24f,15f,Path.Direction.CW)}
+                      val inner=Path().apply{addCircle(29f,20f,14f,Path.Direction.CW)}
+                      outer.op(inner,Path.Op.DIFFERENCE)
+                      c.drawPath(outer,Paint(Paint.ANTI_ALIAS_FLAG).apply{color=Color.argb(215,255,248,214)})
+                      return b
+                  }
+
+                  private fun sceneBitmap(context:Context,code:Int,placeName:String,lat:Double?,lon:Double?):Bitmap{
+                      val w=1200; val h=700; val b=Bitmap.createBitmap(w,h,Bitmap.Config.ARGB_8888); val c=Canvas(b)
+                      val night=code>=1000; val wc=code%1000
+                      val meteoRecipe=try{JSONObject(context.resources.openRawResource(R.raw.meteo_suisse_fictive).bufferedReader().use{it.readText()})}catch(_:Exception){JSONObject()}
+                      fun groupFor(code:Int):String{
+                          val groups=meteoRecipe.optJSONObject("wmo") ?: return "cloudy"
+                          for(k in groups.keys()){ val a=groups.optJSONArray(k) ?: continue; for(i in 0 until a.length()) if(a.optInt(i,-999)==code) return k }
+                          return "cloudy"
+                      }
+                      fun intensityFor(group:String,code:Int):String = meteoRecipe.optJSONObject("intensity")?.optJSONObject(group)?.optString(code.toString(),"medium") ?: "medium"
+                      val group=groupFor(wc); val intensity=intensityFor(group,wc)
+                      // Étape 2 : catalogue photographique du lieu, indépendant de la météo.
+                      // On ajoute les lieux ici au fur et à mesure. Aucun lieu inconnu n'emprunte la photo d'un autre.
+                      val placePhotoRes=when {
+                          placeName.equals("Ursy",ignoreCase=true) || (lat!=null && lon!=null && distanceKm(lat,lon,46.634729,6.834161)<=3.5) -> R.drawable.widget_ursy_green
+                          else -> null
+                      }
+                      fun cover(res:Int,alpha:Int=255,blend:Boolean=false,zoom:Float=1f,posY:Float=.5f){
+                          val im=BitmapFactory.decodeResource(context.resources,res) ?: return
+                          val sc=maxOf(w.toFloat()/im.width,h.toFloat()/im.height)*zoom; val dw=im.width*sc; val dh=im.height*sc
+                          val left=(w-dw)/2f
+                          val top=(h-dh)*posY
+                          val dst=RectF(left,top,left+dw,top+dh)
+                          val paint=Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG).apply{this.alpha=alpha;if(blend)xfermode=PorterDuffXfermode(PorterDuff.Mode.SCREEN)}
+                          c.drawBitmap(im,null,dst,paint); paint.xfermode=null
+                      }
+                      // Couche 1 : lieu réel. Même cadrage que Ma Vie v0.3.22 :
+                      // horizon relevé, moins de ciel et davantage de paysage.
+                      if(placePhotoRes!=null) cover(placePhotoRes,zoom=1.18f,posY=.62f)
+                      else c.drawColor(if(night)Color.rgb(7,31,48) else Color.rgb(105,166,198))
+                      // Couche 2 : moment/ciel photographique.
+                      if(night){
+                          // v0.3.24 : étoiles discrètes, uniquement dans le ciel.
+                          c.save()
+                          c.clipRect(0f,0f,w.toFloat(),h*.48f)
+                          cover(R.drawable.meteo_night_stars,42,true)
+                          c.restore()
+                      }
+                      else when(group){
+                          "clear" -> cover(R.drawable.meteo_sun_day,48,true)
+                          "light_cloud" -> cover(R.drawable.meteo_cloud_light,72,true)
+                          "cloudy" -> cover(if(wc==3)R.drawable.meteo_cloud_heavy else R.drawable.meteo_cloud_medium,if(wc==3)118 else 88,true)
+                      }
+                      // Couche 3 : phénomène photographique. Le lieu recule pour pluie/brouillard/orage/neige.
+                      when(group){
+                          "fog" -> cover(if(intensity=="dense")R.drawable.meteo_fog_dense else R.drawable.meteo_fog_light,if(intensity=="dense")194 else 126,true)
+                          "drizzle","rain" -> cover(if(intensity=="heavy")R.drawable.meteo_rain_heavy else R.drawable.meteo_rain_light,if(intensity=="heavy")184 else 126,false)
+                          "snow" -> cover(when(intensity){"heavy"->R.drawable.meteo_snow_heavy;"medium"->R.drawable.meteo_snow_medium;else->R.drawable.meteo_snow_light},when(intensity){"heavy"->194;"medium"->158;else->126},true)
+                          "storm" -> cover(R.drawable.meteo_storm,190,false)
+                      }
+                      if(night) {
+                          c.drawRect(0f,0f,w.toFloat(),h.toFloat(),Paint().apply{color=Color.argb(158,0,4,10)})
+                      }
+                      return b
+                  }
+
+                  data class WidgetEvent(val start:String,val end:String,val title:String,val place:String,val description:String)
+                  private fun bindAgenda(v:RemoteViews,items:List<WidgetEvent>,narrow:Boolean){
+                      v.setViewVisibility(R.id.widget_now_empty,if(items.isEmpty())View.VISIBLE else View.GONE)
+                      val rows=arrayOf(R.id.event1,R.id.event2,R.id.event3); val starts=arrayOf(R.id.event1_start,R.id.event2_start,R.id.event3_start); val titles=arrayOf(R.id.event1_title,R.id.event2_title,R.id.event3_title); val endw=arrayOf(R.id.event1_endwide,R.id.event2_endwide,R.id.event3_endwide); val endn=arrayOf(R.id.event1_endnarrow,R.id.event2_endnarrow,R.id.event3_endnarrow); val places=arrayOf(R.id.event1_place,R.id.event2_place,R.id.event3_place); val descs=arrayOf(R.id.event1_desc,R.id.event2_desc,R.id.event3_desc)
+                      for(i in rows.indices){ val e=items.getOrNull(i); v.setViewVisibility(rows[i],if(e==null)View.GONE else View.VISIBLE); if(e!=null){v.setTextViewText(starts[i],e.start);v.setTextViewText(titles[i],e.title);val cleanDesc=e.description.trim().replace(Regex("^\\s*\\[[^\\]\\r\\n]+\\]\\s*"),"").trim(); val place=e.place.replace(Regex("[\\r\\n]+"), " ").replace(Regex("\\s+"), " ").trim(); val details=when { place.isNotEmpty() && cleanDesc.isNotEmpty() -> "$place · $cleanDesc"; place.isNotEmpty() -> place; else -> cleanDesc }; val detailLine=if(narrow && details.isNotEmpty()) "- ${e.end}   $details" else details; v.setTextViewText(places[i],detailLine); v.setTextViewText(descs[i],""); v.setViewVisibility(places[i],if(detailLine.isEmpty()) View.GONE else View.VISIBLE); v.setViewVisibility(descs[i],View.GONE);v.setTextViewText(endw[i],if(narrow)"" else "jusqu'à ${e.end}");v.setTextViewText(endn[i],"");v.setViewVisibility(endw[i],if(narrow)View.GONE else View.VISIBLE);v.setViewVisibility(endn[i],View.GONE)}}
+                  }
+
+                  private fun events(c:Context):Pair<List<WidgetEvent>,String>{
+                      val now=System.currentTimeMillis()
+                      val todayStart=Calendar.getInstance().apply{set(Calendar.HOUR_OF_DAY,0);set(Calendar.MINUTE,0);set(Calendar.SECOND,0);set(Calendar.MILLISECOND,0)}.timeInMillis
+                      val tomorrowStart=Calendar.getInstance().apply{timeInMillis=todayStart;add(Calendar.DAY_OF_YEAR,1)}.timeInMillis
+                      val end=tomorrowStart-1
+                      val uri=CalendarContract.Instances.CONTENT_URI.buildUpon().also{android.content.ContentUris.appendId(it,todayStart);android.content.ContentUris.appendId(it,end)}.build()
+                      val p=arrayOf(CalendarContract.Instances.TITLE,CalendarContract.Instances.BEGIN,CalendarContract.Instances.END,CalendarContract.Instances.EVENT_LOCATION,CalendarContract.Instances.ALL_DAY,CalendarContract.Instances.DESCRIPTION)
+                      val timed=mutableListOf<WidgetEvent>(); val weeks=mutableListOf<String>(); val periods=mutableListOf<String>(); val events=mutableListOf<String>(); val important=mutableListOf<String>(); val tf=SimpleDateFormat("HH:mm",Locale.getDefault())
+                      try{c.contentResolver.query(uri,p,null,null,CalendarContract.Instances.BEGIN+" ASC")?.use{q->while(q.moveToNext()){
+                          val title=q.getString(0)?:""; val start=q.getLong(1); val stop=q.getLong(2); val loc=q.getString(3)?:""; val all=q.getInt(4)==1; val desc=q.getString(5)?:""
+                          if(all){
+                              // CalendarProvider stores ALL_DAY BEGIN/END at UTC midnight.  Do not compare
+                              // those instants with local-midnight milliseconds: around UTC+02 this makes
+                              // yesterday leak into today and shifts the day number of multi-day periods.
+                              val zone=java.time.ZoneId.systemDefault()
+                              val today=java.time.LocalDate.now(zone)
+                              val startDate=java.time.Instant.ofEpochMilli(start).atZone(java.time.ZoneOffset.UTC).toLocalDate()
+                              val endDateExclusive=java.time.Instant.ofEpochMilli(stop).atZone(java.time.ZoneOffset.UTC).toLocalDate()
+                              if(!today.isBefore(startDate) && today.isBefore(endDateExclusive)){
+                                  val days=java.time.temporal.ChronoUnit.DAYS.between(startDate,endDateExclusive).toInt().coerceAtLeast(1)
+                                  val birthday=Regex("anniversaire|birthday",RegexOption.IGNORE_CASE).containsMatchIn(title)
+                                  val isWeek=Regex("^\\s*semaine\\s+\\d{1,2}\\b",RegexOption.IGNORE_CASE).containsMatchIn(title)
+                                  if(isWeek) weeks.add("• "+title)
+                                  else if(days>1){
+                                      val day=(java.time.temporal.ChronoUnit.DAYS.between(startDate,today).toInt()+1).coerceIn(1,days)
+                                      periods.add("🏖️ "+title+" (jour $day/$days)")
+                                  } else if(birthday) important.add("🎂 "+title)
+                                  else events.add("• "+title)
+                              }
+                          }
+                          else if(stop>=now && start<=end){ if(timed.size<3) timed.add(WidgetEvent(tf.format(Date(start)),tf.format(Date(stop)),title,loc,desc)) }
+                      }}}catch(_:Exception){}
+                      val know=(weeks+periods+events+important).take(3)
+                      return Pair(timed,if(know.isEmpty())"Rien de particulier aujourd’hui." else know.joinToString("\n"))
+                  }
+              }
+          }
+          EOF
+
+          cat > android/app/src/main/java/ch/sz/mavie/MaVieCarAppService.kt <<'EOF'
+          package ch.sz.mavie
+
+          import android.Manifest
+          import android.content.pm.PackageManager
+          import android.location.Location
+          import android.location.LocationManager
+          import android.os.Build
+          import android.os.CancellationSignal
+          import java.util.concurrent.CountDownLatch
+          import java.util.concurrent.TimeUnit
+          import androidx.car.app.CarAppService
+          import androidx.car.app.CarContext
+          import androidx.car.app.Screen
+          import androidx.car.app.Session
+          import androidx.car.app.model.Action
+          import androidx.car.app.model.Header
+          import androidx.car.app.model.Pane
+          import androidx.car.app.model.PaneTemplate
+          import androidx.car.app.model.Row
+          import androidx.car.app.model.Template
+          import androidx.car.app.validation.HostValidator
+          import androidx.core.content.ContextCompat
+          import org.json.JSONObject
+          import java.net.URL
+          import java.util.concurrent.Executors
+
+          class MaVieCarAppService : CarAppService() {
+              override fun createHostValidator(): HostValidator = HostValidator.ALLOW_ALL_HOSTS_VALIDATOR
+              override fun onCreateSession(): Session = MaVieCarSession()
+          }
+
+          class MaVieCarSession : Session() {
+              override fun onCreateScreen(intent: android.content.Intent): Screen = MaVieWeatherScreen(carContext)
+          }
+
+          class MaVieWeatherScreen(carContext: CarContext) : Screen(carContext) {
+              private val executor = Executors.newSingleThreadExecutor()
+              @Volatile private var weather: WeatherData? = null
+              @Volatile private var error: String? = null
+              private var requested = false
+
+              override fun onGetTemplate(): Template {
+                  if (!requested) {
+                      requested = true
+                      loadWeather()
+                  }
+                  val pane = Pane.Builder()
+                  val w = weather
+                  when {
+                      w != null -> {
+                          pane.addRow(Row.Builder().setTitle("${w.temperature}° · ${w.description}").addText(w.place).build())
+                          pane.addRow(Row.Builder().setTitle("Ma Vie").addText("Météo actuelle · mise à jour automatique").build())
+                      }
+                      error != null -> pane.addRow(Row.Builder().setTitle("Météo indisponible").addText(error!!).build())
+                      else -> pane.addRow(Row.Builder().setTitle("Météo").addText("Chargement…").build())
+                  }
+                  val header = Header.Builder().setTitle("Ma Vie").setStartHeaderAction(Action.APP_ICON).build()
+                  return PaneTemplate.Builder(pane.build()).setHeader(header).build()
+              }
+
+              private fun loadWeather() {
+                  executor.execute {
+                      try {
+                          val loc = lastLocation() ?: throw IllegalStateException("Ouvrez Ma Vie sur le téléphone pour autoriser la localisation.")
+                          val u = "https://api.open-meteo.com/v1/forecast?latitude=${loc.latitude}&longitude=${loc.longitude}&current=temperature_2m,weather_code&timezone=auto&forecast_days=1"
+                          val json = JSONObject(URL(u).readText())
+                          val current = json.getJSONObject("current")
+                          val temp = kotlin.math.round(current.getDouble("temperature_2m")).toInt()
+                          val code = current.getInt("weather_code")
+                          weather = WeatherData(temp, wmo(code), "Position actuelle")
+                      } catch (t: Throwable) {
+                          error = t.message ?: "Réessayez dans quelques instants."
+                      }
+                      carContext.mainExecutor.execute { invalidate() }
+                  }
+              }
+
+              private fun lastLocation(): Location? {
+                  val fine = ContextCompat.checkSelfPermission(carContext, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                  val coarse = ContextCompat.checkSelfPermission(carContext, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+                  if (!fine && !coarse) return null
+                  val lm = carContext.getSystemService(android.content.Context.LOCATION_SERVICE) as LocationManager
+                  return lm.getProviders(true).mapNotNull { p -> runCatching { lm.getLastKnownLocation(p) }.getOrNull() }.maxByOrNull { it.time }
+              }
+
+              private fun wmo(code: Int): String = when (code) {
+                  0 -> "Ciel dégagé"
+                  1 -> "Plutôt dégagé"
+                  2 -> "Partiellement nuageux"
+                  3 -> "Couvert"
+                  45,48 -> "Brouillard"
+                  51,53,55,56,57 -> "Bruine"
+                  61,63,65,66,67,80,81,82 -> "Pluie"
+                  71,73,75,77,85,86 -> "Neige"
+                  95,96,99 -> "Orage"
+                  else -> "Conditions météo"
+              }
+          }
+
+          data class WeatherData(val temperature: Int, val description: String, val place: String)
+          EOF
+
+          cat > android/app/src/main/java/ch/sz/mavie/MainActivity.kt <<'EOF'
+          package ch.sz.mavie
+          import android.Manifest
+          import android.content.Intent
+          import android.content.pm.PackageManager
+          import android.os.Bundle
+          import android.graphics.Color
+          import android.graphics.drawable.ColorDrawable
+          import android.view.WindowManager
+          import android.webkit.WebResourceRequest
+          import android.webkit.WebView
+          import android.webkit.WebViewClient
+          import android.webkit.WebSettings
+          import androidx.activity.result.contract.ActivityResultContracts
+          import androidx.appcompat.app.AppCompatActivity
+          import androidx.core.content.ContextCompat
+
+          class MainActivity:AppCompatActivity(){
+              private lateinit var webView:WebView
+              private val host="sergezehntner-ux.github.io"
+              private var storageCleaned=false
+              private val startUrl="https://sergezehntner-ux.github.io/Ma_Vie/index.html"
+              private val askPermissions=registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()){webView.reload()}
+              fun refreshEnyaq(){runOnUiThread{webView.evaluateJavascript("window.maVieRefreshEnyaq&&window.maVieRefreshEnyaq()",null)}}
+              fun refreshLibre(){runOnUiThread{webView.evaluateJavascript("window.maVieRefreshLibre&&window.maVieRefreshLibre()",null)}}
+              override fun onCreate(savedInstanceState:Bundle?){
+                  super.onCreate(savedInstanceState)
+                  window.addFlags(WindowManager.LayoutParams.FLAG_SHOW_WALLPAPER)
+                  window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+                  setContentView(R.layout.activity_main);webView=findViewById(R.id.webView)
+                  webView.setBackgroundColor(Color.TRANSPARENT)
+                  webView.settings.javaScriptEnabled=true;webView.settings.domStorageEnabled=true
+                  webView.settings.cacheMode=WebSettings.LOAD_NO_CACHE
+                  webView.clearCache(true);webView.clearHistory()
+                  android.webkit.CookieManager.getInstance().flush()
+                  webView.addJavascriptInterface(CalendarBridge(this),"MaVieAndroid")
+                  webView.addJavascriptInterface(EnyaqBridge(this,this),"MaVieEnyaq")
+                  webView.addJavascriptInterface(LibreBridge(this,this),"MaVieLibre")
+                  webView.webViewClient=object:WebViewClient(){
+                      override fun shouldOverrideUrlLoading(v:WebView,r:WebResourceRequest):Boolean{
+                          val u=r.url;return if(u.scheme=="https"&&u.host==host)false else{startActivity(Intent(Intent.ACTION_VIEW,u));true}
+                      }
+                      override fun onPageFinished(v:WebView,url:String){
+                          super.onPageFinished(v,url)
+                          if(!storageCleaned){
+                              storageCleaned=true
+                              val cleanJs = """(async function(){
+                                try{
+                                  if('serviceWorker' in navigator){
+                                    const regs=await navigator.serviceWorker.getRegistrations();
+                                    await Promise.all(regs.map(r=>r.unregister()));
+                                  }
+                                  if('caches' in window){
+                                    const ks=await caches.keys();
+                                    await Promise.all(ks.filter(k=>k.startsWith('ma-vie-')).map(k=>caches.delete(k)));
+                                  }
+                                }catch(e){}
+                                location.replace('${startUrl}?native=1&clean=1&t='+Date.now());
+                              })();"""
+                              v.evaluateJavascript(cleanJs,null)
+                              return
+                          }
+                          val js = """(function(){
+                            var s=document.getElementById('mv-android-wallpaper-mode');
+                            if(!s){
+                              s=document.createElement('style');
+                              s.id='mv-android-wallpaper-mode';
+                              s.textContent='html,body,.app-shell{background:transparent!important;} .weather-scene,.mv-night-crescent{display:none!important;}';
+                              document.head.appendChild(s);
+                            }
+                          })();"""
+                          v.evaluateJavascript(js,null)
+                      }
+                  }
+                  val missing=mutableListOf<String>()
+                  if(ContextCompat.checkSelfPermission(this,Manifest.permission.READ_CALENDAR)!=PackageManager.PERMISSION_GRANTED)missing.add(Manifest.permission.READ_CALENDAR)
+                  if(ContextCompat.checkSelfPermission(this,Manifest.permission.ACCESS_COARSE_LOCATION)!=PackageManager.PERMISSION_GRANTED)missing.add(Manifest.permission.ACCESS_COARSE_LOCATION)
+                  if(ContextCompat.checkSelfPermission(this,Manifest.permission.ACCESS_FINE_LOCATION)!=PackageManager.PERMISSION_GRANTED)missing.add(Manifest.permission.ACCESS_FINE_LOCATION)
+                  if(missing.isNotEmpty())askPermissions.launch(missing.toTypedArray())
+                  val nonce=System.currentTimeMillis()
+                  val headers=mapOf("Cache-Control" to "no-cache, no-store, max-age=0","Pragma" to "no-cache")
+                  webView.loadUrl(startUrl+"?native=1&t="+nonce,headers)
+                  MaVieWidgetProvider.refresh(this)
+              }
+          }
+          EOF
+
+      - name: Restore permanent signing key
+        shell: bash
+        env:
+          MAVIE_KEYSTORE_BASE64: ${{ secrets.MAVIE_KEYSTORE_BASE64 }}
+        run: |
+          echo "$MAVIE_KEYSTORE_BASE64" | base64 --decode > android/mavie-release.jks
+
+      - name: Build signed APK + AAB
+        env:
+          MAVIE_KEYSTORE_PASSWORD: ${{ secrets.MAVIE_KEYSTORE_PASSWORD }}
+          MAVIE_KEY_ALIAS: ${{ secrets.MAVIE_KEY_ALIAS }}
+          MAVIE_KEY_PASSWORD: ${{ secrets.MAVIE_KEY_PASSWORD }}
+        run: gradle -p android assembleRelease bundleRelease
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Ma_Vie_Android_v0.3.45
+          path: |
+            android/app/build/outputs/apk/release/app-release.apk
+            android/app/build/outputs/bundle/release/app-release.aab
