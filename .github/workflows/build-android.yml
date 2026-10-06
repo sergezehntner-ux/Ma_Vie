@@ -65,8 +65,8 @@ jobs:
                   applicationId = "ch.sz.mavie"
                   minSdk = 26
                   targetSdk = 35
-                  versionCode = 227
-                  versionName = "0.3.44"
+                  versionCode = 229
+                  versionName = "0.3.46"
               }
               signingConfigs {
                   create("release") {
@@ -121,6 +121,7 @@ jobs:
               <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
               <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
           <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
+              <uses-permission android:name="android.permission.WAKE_LOCK"/>
               <queries>
                   <package android:name="cz.skodaauto.myskoda"/>
               </queries>
@@ -537,25 +538,42 @@ jobs:
           import android.content.Context
 
           class MaVieWidgetRefreshService : JobService() {
+              @Volatile private var stopped = false
+
               override fun onStartJob(params: JobParameters?): Boolean {
+                  stopped = false
                   kotlin.concurrent.thread {
-                      try { MaVieWidgetProvider.refreshBlocking(applicationContext) }
-                      finally { jobFinished(params, false) }
+                      try {
+                          MaVieWidgetProvider.refreshBlocking(applicationContext)
+                      } finally {
+                          // v0.3.46 : un job périodique JobScheduler ne peut pas réellement
+                          // descendre sous 15 min. On enchaîne donc des jobs one-shot :
+                          // nouvelle tentative après 5 min, avec échéance à 10 min.
+                          if (!stopped) schedule(applicationContext)
+                          jobFinished(params, false)
+                      }
                   }
                   return true
               }
 
-              override fun onStopJob(params: JobParameters?): Boolean = true
+              override fun onStopJob(params: JobParameters?): Boolean {
+                  stopped = true
+                  schedule(applicationContext)
+                  return false
+              }
 
               companion object {
                   private const val JOB_ID = 260930
-                  private const val PERIOD_MS = 15 * 60 * 1000L
+                  private const val NEXT_MS = 5 * 60 * 1000L
+                  private const val DEADLINE_MS = 10 * 60 * 1000L
 
                   fun schedule(context: Context) {
                       val scheduler = context.getSystemService(Context.JOB_SCHEDULER_SERVICE) as JobScheduler
                       val job = JobInfo.Builder(JOB_ID, ComponentName(context, MaVieWidgetRefreshService::class.java))
                           .setPersisted(true)
-                          .setPeriodic(PERIOD_MS)
+                          .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+                          .setMinimumLatency(NEXT_MS)
+                          .setOverrideDeadline(DEADLINE_MS)
                           .build()
                       scheduler.schedule(job)
                   }
@@ -613,20 +631,31 @@ jobs:
                   // Un BroadcastReceiver peut être tué dès que onReceive() se termine.
                   // goAsync() garde le processus vivant jusqu'à la fin de la mise à jour réseau.
                   val pending = goAsync()
+                  val power = context.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
+                  val wakeLock = power.newWakeLock(
+                      android.os.PowerManager.PARTIAL_WAKE_LOCK,
+                      "MaVie:WidgetRefresh"
+                  ).apply {
+                      setReferenceCounted(false)
+                      acquire(90_000L)
+                  }
                   thread {
                       try {
                           val complete = update(context.applicationContext)
                           if(!complete && attempt<3) scheduleRetry(context,attempt+1)
                       } catch (_:Exception) {
                           if(attempt<3) scheduleRetry(context,attempt+1)
-                      } finally { pending.finish() }
+                      } finally {
+                          if (wakeLock.isHeld) wakeLock.release()
+                          pending.finish()
+                      }
                   }
               }
 
               companion object {
                   private const val ACTION_RETRY="ch.sz.mavie.WIDGET_RETRY"
                   private const val ACTION_PERIODIC="ch.sz.mavie.WIDGET_PERIODIC"
-                  private const val PERIODIC_MS=15*60*1000L
+                  private const val PERIODIC_MS=5*60*1000L
 
                   private fun periodicIntent(context:Context)=PendingIntent.getBroadcast(
                       context,199,Intent(context,MaVieWidgetProvider::class.java).setAction(ACTION_PERIODIC),
@@ -1068,7 +1097,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Ma_Vie_Android_v0.3.42
+          name: Ma_Vie_Android_v0.3.46
           path: |
             android/app/build/outputs/apk/release/app-release.apk
             android/app/build/outputs/bundle/release/app-release.aab
