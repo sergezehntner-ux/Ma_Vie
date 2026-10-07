@@ -154,8 +154,20 @@ jobs:
                       })
                   }
                   return out.toString()
-              }
+              
+                      private val companionPrefs =
+            context.getSharedPreferences("ma_vie_companion", Context.MODE_PRIVATE)
+      
+          @JavascriptInterface
+          fun getCompanionPending(name: String): Boolean =
+                                          companionPrefs.getBoolean(name.lowercase() + "_pending", false)
+        
+          @JavascriptInterface
+          fun setCompanionPending(name: String, pending: Boolean) {
+                                          companionPrefs.edit().putBoolean(name.lowercase() + "_pending", pending).apply()
+                                         MaVieWidgetProvider.refresh(context)
           }
+               }
           EOF
 
           cat > android/app/src/main/java/ch/sergezehntner/mavie/MainActivity.kt <<'EOF'

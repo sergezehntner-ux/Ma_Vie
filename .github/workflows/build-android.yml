@@ -65,8 +65,8 @@ jobs:
                   applicationId = "ch.sz.mavie"
                   minSdk = 26
                   targetSdk = 35
-                  versionCode = 229
-                  versionName = "0.3.46"
+                  versionCode = 230
+                  versionName = "0.3.47"
               }
               signingConfigs {
                   create("release") {
@@ -204,6 +204,7 @@ jobs:
                   </LinearLayout>
                   <LinearLayout android:id="@+id/card_me" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:padding="9dp" android:background="@drawable/widget_card">
                       <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="POUR MOI   " android:textColor="#FFFFFFFF" android:textSize="14sp" android:textStyle="bold"/>
+                      <TextView android:id="@+id/widget_herbier" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="🌿 Herbier" android:textColor="#FFFFFFFF" android:textSize="13sp"/>
                       <TextView android:id="@+id/widget_glucose" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="🩸 Glycémie —" android:textColor="#FFFFFFFF" android:textSize="13sp"/>
                       <TextView android:id="@+id/widget_enyaq" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:gravity="center" android:text="🚙 Enyaq —" android:textColor="#FFFFFFFF" android:textSize="13sp"/>
                   </LinearLayout>
@@ -267,6 +268,17 @@ jobs:
           import java.util.Calendar
 
           class CalendarBridge(private val context: Context) {
+          private val companionPrefs = context.getSharedPreferences("ma_vie_companion", Context.MODE_PRIVATE)
+  
+          @JavascriptInterface
+          fun getCompanionPending(name: String): Boolean =
+                                companionPrefs.getBoolean(name.lowercase() + "_pending", false)
+                                
+                                @JavascriptInterface
+          fun setCompanionPending(name: String, pending: Boolean) {
+                                companionPrefs.edit().putBoolean(name.lowercase() + "_pending", pending).apply()
+                                MaVieWidgetProvider.refresh(context)
+          }
               @JavascriptInterface
               fun getLocation(): String {
                   val fine = ContextCompat.checkSelfPermission(context, android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED
@@ -717,6 +729,12 @@ jobs:
                           val v=RemoteViews(context.packageName,R.layout.ma_vie_widget)
                           v.setTextViewText(R.id.widget_place,shownPlace); v.setTextViewText(R.id.widget_temp,weather.first)
                           v.setTextViewText(R.id.widget_know,ev.second)
+                    val companionPrefs = context.getSharedPreferences("ma_vie_companion", Context.MODE_PRIVATE)
+                    v.setTextViewText(
+                    R.id.widget_herbier,
+                    if (companionPrefs.getBoolean("herbier_pending", false)) "🌿 Herbier ❗" else "🌿 Herbier"
+                    )
+                    
                           v.setTextViewText(R.id.widget_glucose, if(libre?.optBoolean("ok")==true) "🩸 %.1f mmol/L %s".format(Locale.US,libre.optDouble("mmol"),libre.optString("arrow")) else "🩸 Glycémie —")
                           v.setTextViewText(R.id.widget_enyaq,if(enyaq?.optBoolean("ok")==true) "🚙 %.0f %% · %.0f km".format(Locale.US,enyaq.optDouble("percent"),enyaq.optDouble("km")) else "🚙 Enyaq —")
                           val narrow=mgr.getAppWidgetOptions(id).getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH,600)<430

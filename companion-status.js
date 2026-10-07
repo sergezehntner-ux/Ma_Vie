@@ -10,7 +10,8 @@
     if(!on&&el)el.remove();
   }
   function flag(k){try{return localStorage.getItem(k)==='1'}catch(_){return false}}
-  function refresh(){mark(find('Herbier_gourmand'),flag(keys.herbier));mark(find('ma_sante'),flag(keys.sante));mark(find('Djinn'),flag(keys.djinn))}
+function nativeFlag(name,key){try{if(window.MaVieAndroid&&typeof window.MaVieAndroid.getCompanionPending==='function')return !!window.MaVieAndroid.getCompanionPending(name)}catch(_){}return flag(key)}
+function refresh(){mark(find('Herbier_gourmand'),nativeFlag('herbier',keys.herbier));mark(find('ma_sante'),nativeFlag('sante',keys.sante));mark(find('Djinn'),nativeFlag('djinn',keys.djinn))}
   refresh(); window.addEventListener('focus',refresh); window.addEventListener('storage',refresh);
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh()}); setInterval(refresh,15000);
 })();
